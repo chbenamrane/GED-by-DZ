@@ -29,6 +29,7 @@ import {
   PowerOff,
 } from 'lucide-react';
 import { api, downloadExport, saveBlob } from '@/lib/client';
+import { confirmAction } from '@/lib/alerts';
 import { Modal } from './modal';
 import { PdfPreview } from './pdf-preview';
 import type { Field, Values, PageSize } from '@/lib/fields';
@@ -574,8 +575,8 @@ function Documents({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
                       </Link>
                       <button
                         className="danger !gap-1.5 !px-2.5 !py-1.5 !text-xs"
-                        onClick={() => {
-                          if (confirm('Supprimer ce document ?'))
+                        onClick={async () => {
+                          if (await confirmAction('Supprimer ce document ?'))
                             run(async () => {
                               await api(`documents/${d.id}`, 'DELETE');
                               setSelected(selected.filter((id) => id !== d.id));
@@ -889,8 +890,8 @@ function Templates({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
                 type="button"
                 className="secondary !p-2"
                 aria-label="Supprimer le dossier"
-                onClick={() => {
-                  if (confirm('Supprimer le dossier et conserver ses modèles ?'))
+                onClick={async () => {
+                  if (await confirmAction('Supprimer le dossier et conserver ses modèles ?'))
                     run(() => api(`folders/${f.id}`, 'DELETE'));
                 }}
               >
@@ -1009,8 +1010,10 @@ function TemplateTile({
           className={iconButton}
           aria-label="Supprimer le modèle"
           title="Supprimer le modèle"
-          onClick={() => {
-            if (confirm('Supprimer ce modèle ? Les documents existants seront conservés.'))
+          onClick={async () => {
+            if (
+              await confirmAction('Supprimer ce modèle ? Les documents existants seront conservés.')
+            )
               run(() => api(`templates/${t.id}`, 'DELETE'), 'Modèle supprimé.');
           }}
         >
@@ -1360,8 +1363,8 @@ function UserManagement({ run, busy, current }: { run: Run; busy: boolean; curre
                   className="secondary !p-2"
                   aria-label="Supprimer le compte"
                   type="button"
-                  onClick={() => {
-                    if (confirm(`Supprimer le compte ${u.username} ?`))
+                  onClick={async () => {
+                    if (await confirmAction(`Supprimer le compte ${u.username} ?`))
                       run(async () => {
                         await api(`users/${u.id}`, 'DELETE');
                         await load();
