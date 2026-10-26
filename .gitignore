@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+storage/
+src/generated/
+public/pdf.worker.min.mjs
+*.tsbuildinfo
+*.log
+test-results/
+playwright-report/

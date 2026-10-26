@@ -1,0 +1,16 @@
+@import "tailwindcss";
+:root { --ink: #162c3f; --accent: #087e70; }
+body { margin: 0; color: var(--ink); background: #f5f7fa; font-family: Arial, Helvetica, sans-serif; font-size: 14px; }
+button,a,input,select,textarea { -webkit-tap-highlight-color: transparent; }
+button,.button { cursor: pointer; border-radius: 9px; padding: 10px 15px; background: var(--accent); color: white; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+button:disabled { opacity: .5; cursor: wait; }
+button.secondary,.button.secondary { color: var(--ink); background: #e9eef4; }
+button.danger { background: #a5293e; }
+input:not([type=checkbox]):not([type=radio]):not([type=color]),select,textarea { width: 100%; background: white; border: 1px solid #d3dde7; border-radius: 8px; padding: 10px 12px; color: var(--ink); }
+input:focus,select:focus,textarea:focus { outline: 2px solid #67c9b8; outline-offset: 2px; }
+label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+h1 { font-size: 28px; font-weight: 750; letter-spacing: -.8px; } h2 { font-size: 18px; font-weight: 700; }
+.card { background: white; border: 1px solid #e1e8ef; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px #172b3f04; }
+.muted { color: #657789; } .error { background: #fff0f1; color: #a3233b; padding: 12px; border-radius: 9px; }
+.notice { background: #e3f6ef; color: #12664e; padding: 12px; border-radius: 9px; }
+table { border-collapse: collapse; width: 100%; } th,td { padding: 13px 14px; text-align: left; border-bottom: 1px solid #edf1f5; } th { color: #6a7d90; font-size: 12px; font-weight: 600; }
