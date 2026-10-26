@@ -29,7 +29,7 @@ import {
   PowerOff,
 } from 'lucide-react';
 import { api, downloadExport, saveBlob } from '@/lib/client';
-import { confirmAction } from '@/lib/alerts';
+import { confirmAction, toast } from '@/lib/alerts';
 import { Modal } from './modal';
 import { PdfPreview } from './pdf-preview';
 import type { Field, Values, PageSize } from '@/lib/fields';
@@ -71,7 +71,6 @@ type Section = 'documents' | 'templates' | 'users' | 'settings' | 'generate' | '
 export function Workspace({ section, id }: { section: Section; id?: string }) {
   const [data, setData] = useState<Bootstrap | null>(null),
     [error, setError] = useState(''),
-    [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false);
   async function load() {
     try {
@@ -87,11 +86,10 @@ export function Workspace({ section, id }: { section: Section; id?: string }) {
   }, []);
   async function run(task: () => Promise<unknown>, message = 'Enregistré.') {
     setError('');
-    setNotice('');
     setBusy(true);
     try {
       await task();
-      setNotice(message);
+      if (message) toast(message);
       await load();
     } catch (e) {
       setError((e as Error).message);
@@ -210,11 +208,6 @@ export function Workspace({ section, id }: { section: Section; id?: string }) {
             >
               ×
             </button>
-          </div>
-        )}
-        {notice && (
-          <div className="notice mb-5" role="status">
-            {notice}
           </div>
         )}
         {!admin && ['editor', 'templates', 'users', 'settings'].includes(section) ? (

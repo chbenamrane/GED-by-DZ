@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, Save, Copy, Trash2, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, saveBlob } from '@/lib/client';
+import { toast } from '@/lib/alerts';
 import type { Field, PageSize } from '@/lib/fields';
 type Template = { id: string; name: string; fields: Field[]; pageSizes: PageSize[] };
 type Pdf = import('pdfjs-dist').PDFDocumentProxy;
@@ -193,6 +194,7 @@ export function PdfEditor({ id, onError }: { id: string; onError: (message: stri
       await api(`templates/${id}`, 'PATCH', { fields });
       setDirty(false);
       setStatus('Enregistré');
+      toast('Modèle enregistré.');
     } catch (e) {
       onError((e as Error).message);
     } finally {
