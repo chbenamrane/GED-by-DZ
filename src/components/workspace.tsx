@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Files,
   Layers,
@@ -16,10 +17,20 @@ import {
   ArrowUpRight,
   Folder,
   UserCircle,
-  CheckCircle2,
   Copy,
+  Eye,
+  Share2,
+  Save,
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  SlidersHorizontal,
+  Power,
+  PowerOff,
 } from 'lucide-react';
-import { api, downloadExport } from '@/lib/client';
+import { api, downloadExport, saveBlob } from '@/lib/client';
+import { Modal } from './modal';
+import { PdfPreview } from './pdf-preview';
 import type { Field, Values, PageSize } from '@/lib/fields';
 import { PdfEditor } from './pdf-editor';
 type User = {
@@ -310,7 +321,9 @@ function Documents({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
     [filter, setFilter] = useState(''),
     [selected, setSelected] = useState<string[]>([]),
     [email, setEmail] = useState(''),
-    [choose, setChoose] = useState(false);
+    [choose, setChoose] = useState(false),
+    [viewing, setViewing] = useState<Doc | null>(null),
+    [sharing, setSharing] = useState<Doc | null>(null);
   const docs = data.documents.filter(
     (d) =>
       (!filter || d.templateId === filter) &&
@@ -334,29 +347,47 @@ function Documents({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
         </button>
       </div>
       {choose && (
-        <div className="card mb-5">
-          <h2 className="mb-4">Choisissez un modèle</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {active.map((t) => (
-              <Link
-                className="flex items-center justify-between rounded-xl border border-slate-200 p-4 hover:border-emerald-500"
-                href={`/generate/${t.id}`}
-                key={t.id}
-              >
-                <span className="flex items-center gap-3">
-                  <FileText style={{ color: t.color }} size={20} />
-                  {t.name}
-                </span>
-                <ArrowUpRight size={16} />
-              </Link>
-            ))}
-            {!active.length && (
-              <p className="muted">
-                Aucun modèle actif. Un administrateur doit préparer et activer un modèle.
-              </p>
-            )}
-          </div>
-        </div>
+        <Modal title="Nouveau document" onClose={() => setChoose(false)}>
+          <TemplatePicker templates={active} folders={data.folders} />
+        </Modal>
+      )}
+      {viewing && (
+        <Modal title={viewing.template.name} wide onClose={() => setViewing(null)}>
+          <DocumentView id={viewing.id} />
+        </Modal>
+      )}
+      {sharing && (
+        <Modal title="Partager le document" onClose={() => setSharing(null)}>
+          <form
+            className="grid gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const to = new FormData(e.currentTarget).get('email');
+              run(async () => {
+                await api('documents/export', 'POST', { ids: [sharing.id], email: to });
+                setSharing(null);
+              }, 'Document envoyé.');
+            }}
+          >
+            <p className="muted text-xs">
+              {sharing.template.name} sera envoyé en pièce jointe PDF à l’adresse indiquée.
+            </p>
+            <label>
+              Adresse e-mail du destinataire
+              <input
+                name="email"
+                type="email"
+                required
+                autoFocus
+                placeholder="destinataire@exemple.fr"
+              />
+            </label>
+            <button disabled={busy}>
+              <Mail size={16} />
+              Envoyer
+            </button>
+          </form>
+        </Modal>
       )}
       <div className="mb-7 grid gap-4 sm:grid-cols-3">
         {[
@@ -513,24 +544,36 @@ function Documents({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
                     </span>
                   </td>
                   <td>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: 'Voir', icon: Eye, onClick: () => setViewing(d) },
+                        { label: 'Partager', icon: Share2, onClick: () => setSharing(d) },
+                      ].map((x) => (
+                        <button
+                          key={x.label}
+                          className="secondary !gap-1.5 !px-2.5 !py-1.5 !text-xs"
+                          onClick={x.onClick}
+                        >
+                          <x.icon size={15} />
+                          {x.label}
+                        </button>
+                      ))}
                       <a
                         href={`/api/documents/${d.id}/pdf`}
-                        aria-label="Télécharger le PDF"
-                        className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                        className="button secondary !gap-1.5 !px-2.5 !py-1.5 !text-xs"
                       >
-                        <Download size={16} />
+                        <Download size={15} />
+                        Télécharger
                       </a>
                       <Link
                         href={`/generate/${d.templateId}?dup=${d.id}`}
-                        aria-label="Dupliquer"
-                        className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                        className="button secondary !gap-1.5 !px-2.5 !py-1.5 !text-xs"
                       >
-                        <Copy size={16} />
+                        <Copy size={15} />
+                        Dupliquer
                       </Link>
                       <button
-                        aria-label="Supprimer le document"
-                        className="secondary !p-2"
+                        className="danger !gap-1.5 !px-2.5 !py-1.5 !text-xs"
                         onClick={() => {
                           if (confirm('Supprimer ce document ?'))
                             run(async () => {
@@ -540,6 +583,7 @@ function Documents({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
                         }}
                       >
                         <Trash2 size={15} />
+                        Supprimer
                       </button>
                     </div>
                   </td>
@@ -570,15 +614,117 @@ function Documents({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
     </>
   );
 }
+function DocumentView({ id }: { id: string }) {
+  const source = useCallback(async () => {
+    const r = await fetch(`/api/documents/${id}/view`);
+    if (!r.ok) throw new Error((await r.json()).error ?? 'Document indisponible.');
+    return r.arrayBuffer();
+  }, [id]);
+  return (
+    <div className="mx-auto max-w-2xl">
+      <PdfPreview source={source} />
+    </div>
+  );
+}
+function TemplatePicker({
+  templates,
+  folders,
+}: {
+  templates: Template[];
+  folders: { id: string; name: string }[];
+}) {
+  const [open, setOpen] = useState<string[]>([]),
+    [q, setQ] = useState('');
+  const query = q.trim().toLowerCase();
+  const groups = [...folders, { id: 'none', name: 'Sans dossier' }]
+    .map((f) => ({
+      ...f,
+      items: templates.filter(
+        (t) =>
+          (f.id === 'none' ? !t.folderId : t.folderId === f.id) &&
+          t.name.toLowerCase().includes(query),
+      ),
+    }))
+    .filter((g) => g.items.length);
+  return (
+    <div className="grid gap-3">
+      <input
+        aria-label="Rechercher un modèle"
+        placeholder="Rechercher un modèle…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
+      {groups.map((g) => {
+        const expanded = !!query || open.includes(g.id);
+        return (
+          <section key={g.id} className="rounded-xl border border-slate-200">
+            <button
+              type="button"
+              aria-expanded={expanded}
+              className="secondary w-full !justify-start !rounded-xl"
+              onClick={() => setOpen(expanded ? open.filter((o) => o !== g.id) : [...open, g.id])}
+            >
+              {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              <Folder size={16} />
+              {g.name}
+              <span className="ml-auto text-xs opacity-60">{g.items.length}</span>
+            </button>
+            {expanded && (
+              <div className="grid gap-2 p-3 sm:grid-cols-2">
+                {g.items.map((t) => (
+                  <Link
+                    className="flex items-center justify-between rounded-lg border border-slate-200 p-3 hover:border-emerald-500"
+                    href={`/generate/${t.id}`}
+                    key={t.id}
+                  >
+                    <span className="flex items-center gap-3">
+                      <FileText style={{ color: t.color }} size={20} />
+                      {t.name}
+                    </span>
+                    <ArrowUpRight size={16} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        );
+      })}
+      {!groups.length && (
+        <p className="muted">
+          {query
+            ? 'Aucun modèle ne correspond.'
+            : 'Aucun modèle actif. Un administrateur doit préparer et activer un modèle.'}
+        </p>
+      )}
+    </div>
+  );
+}
 function Templates({ data, run, busy }: { data: Bootstrap; run: Run; busy: boolean }) {
   const [upload, setUpload] = useState(false),
-    [folder, setFolder] = useState(''),
-    [search, setSearch] = useState('');
-  const templates = data.templates.filter(
-    (t) =>
-      (!folder || t.folderId === folder || (folder === 'none' && !t.folderId)) &&
-      t.name.toLowerCase().includes(search.toLowerCase()),
-  );
+    [search, setSearch] = useState(''),
+    [dragId, setDragId] = useState<string | null>(null),
+    [over, setOver] = useState<string | null>(null),
+    [collapsed, setCollapsed] = useState<string[]>([]);
+  const groups = [...data.folders, { id: 'none', name: 'Sans dossier' }]
+    .map((g) => ({
+      ...g,
+      items: data.templates.filter(
+        (t) =>
+          (g.id === 'none' ? !t.folderId : t.folderId === g.id) &&
+          t.name.toLowerCase().includes(search.toLowerCase()),
+      ),
+    }))
+    .filter((g) => !search || g.items.length);
+  function move(templateId: string, target: string) {
+    const t = data.templates.find((x) => x.id === templateId);
+    setDragId(null);
+    setOver(null);
+    if (!t || (t.folderId ?? 'none') === target) return;
+    run(
+      () => api(`templates/${t.id}`, 'PATCH', { folderId: target === 'none' ? null : target }),
+      'Modèle déplacé.',
+    );
+  }
   return (
     <>
       <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
@@ -635,7 +781,7 @@ function Templates({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
           <button disabled={busy}>Importer le modèle</button>
         </form>
       )}
-      <div className="mb-5 flex flex-wrap gap-3">
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <input
           className="md:!w-80"
           aria-label="Rechercher un modèle"
@@ -643,90 +789,70 @@ function Templates({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select
-          className="md:!w-56"
-          aria-label="Filtrer par dossier"
-          value={folder}
-          onChange={(e) => setFolder(e.target.value)}
-        >
-          <option value="">Tous les dossiers</option>
-          <option value="none">Sans dossier</option>
-          {data.folders.map((f) => (
-            <option value={f.id} key={f.id}>
-              {f.name}
-            </option>
-          ))}
-        </select>
+        <p className="muted text-xs">Glissez un modèle sur un dossier pour le déplacer.</p>
       </div>
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {templates.map((t) => (
-          <div className="card flex flex-col !p-5" key={t.id}>
-            <div className="mb-5 flex items-start justify-between">
-              <span className="rounded-xl bg-slate-50 p-4">
-                <FileText size={28} style={{ color: t.color }} />
-              </span>
-              <span
-                className={`rounded-full px-2 py-1 text-[11px] font-semibold ${t.active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
-              >
-                {t.active ? 'Actif' : 'Brouillon'}
-              </span>
-            </div>
-            <input
-              aria-label="Nom du modèle"
-              defaultValue={t.name}
-              className="!border-0 !p-0 !text-lg !font-bold"
-              onBlur={(e) => {
-                if (e.target.value !== t.name)
-                  run(() => api(`templates/${t.id}`, 'PATCH', { name: e.target.value }));
+      <div className="grid gap-4">
+        {groups.map((g) => {
+          const open = !collapsed.includes(g.id);
+          return (
+            <section
+              key={g.id}
+              aria-label={`Dossier ${g.name}`}
+              className={`rounded-2xl border bg-white p-3 transition-colors ${over === g.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}`}
+              onDragOver={(e) => {
+                if (!dragId) return;
+                e.preventDefault();
+                setOver(g.id);
               }}
-            />
-            <p className="muted mb-5 mt-2 text-xs">
-              {t.pageSizes.length} page(s) · {t.pageSizes[0]?.width.toFixed(1)} ×{' '}
-              {t.pageSizes[0]?.height.toFixed(1)} mm
-            </p>
-            <select
-              className="mb-4 !text-xs"
-              aria-label={`Dossier de ${t.name}`}
-              value={t.folderId ?? ''}
-              onChange={(e) =>
-                run(() => api(`templates/${t.id}`, 'PATCH', { folderId: e.target.value || null }))
-              }
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                move(e.dataTransfer.getData('text/plain') || dragId || '', g.id);
+              }}
             >
-              <option value="">Sans dossier</option>
-              {data.folders.map((f) => (
-                <option value={f.id} key={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-            <div className="mt-auto flex flex-wrap gap-2">
-              <Link className="button !text-xs" href={`/templates/${t.id}`}>
-                Définir les champs
-                <ArrowUpRight size={14} />
-              </Link>
               <button
-                className="secondary !text-xs"
-                disabled={busy}
-                onClick={() => run(() => api(`templates/${t.id}`, 'PATCH', { active: !t.active }))}
+                type="button"
+                aria-expanded={open}
+                className="secondary w-full !justify-start !bg-transparent !px-2 !py-1.5"
+                onClick={() =>
+                  setCollapsed(open ? [...collapsed, g.id] : collapsed.filter((c) => c !== g.id))
+                }
               >
-                {t.active ? 'Désactiver' : 'Activer'}
+                {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                <Folder size={17} />
+                {g.name}
+                <span className="ml-1 text-xs font-normal opacity-60">{g.items.length}</span>
               </button>
-              <button
-                className="secondary !p-2"
-                aria-label="Supprimer le modèle"
-                onClick={() => {
-                  if (confirm('Supprimer ce modèle ? Les documents existants seront conservés.'))
-                    run(() => api(`templates/${t.id}`, 'DELETE'), 'Modèle supprimé.');
-                }}
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
-          </div>
-        ))}
+              {open && (
+                <div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3">
+                  {g.items.map((t) => (
+                    <TemplateTile
+                      key={t.id}
+                      t={t}
+                      run={run}
+                      busy={busy}
+                      onDragStart={() => setDragId(t.id)}
+                      onDragEnd={() => {
+                        setDragId(null);
+                        setOver(null);
+                      }}
+                    />
+                  ))}
+                  {!g.items.length && (
+                    <p className="muted col-span-full px-2 py-4 text-xs">
+                      Dossier vide. Déposez un modèle ici.
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
-      {!templates.length && (
-        <div className="card py-16 text-center">
+      {!data.templates.length && (
+        <div className="card mt-5 py-16 text-center">
           <Layers size={40} className="mx-auto text-slate-300" />
           <h2 className="mt-4">Aucun modèle dans cet espace</h2>
           <p className="muted mt-2">Importez un PDF pour créer votre premier formulaire.</p>
@@ -798,6 +924,102 @@ function Templates({ data, run, busy }: { data: Bootstrap; run: Run; busy: boole
     </>
   );
 }
+function TemplateTile({
+  t,
+  run,
+  busy,
+  onDragStart,
+  onDragEnd,
+}: {
+  t: Template;
+  run: Run;
+  busy: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+}) {
+  const [renaming, setRenaming] = useState(false);
+  const iconButton = 'secondary !p-1.5';
+  return (
+    <div
+      draggable={!renaming}
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', t.id);
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+      className={`flex cursor-grab flex-col items-center gap-1 rounded-xl border border-slate-200 p-3 text-center hover:border-emerald-400 hover:bg-emerald-50/40 ${t.active ? '' : 'bg-slate-50'}`}
+    >
+      <FileText size={38} style={{ color: t.color }} className={t.active ? '' : 'opacity-50'} />
+      {renaming ? (
+        <input
+          aria-label="Nom du modèle"
+          autoFocus
+          defaultValue={t.name}
+          maxLength={120}
+          className="!px-1 !py-1 text-center !text-xs"
+          onBlur={(e) => {
+            setRenaming(false);
+            const name = e.target.value.trim();
+            if (name && name !== t.name) run(() => api(`templates/${t.id}`, 'PATCH', { name }));
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur();
+            if (e.key === 'Escape') {
+              e.currentTarget.value = t.name;
+              e.currentTarget.blur();
+            }
+          }}
+        />
+      ) : (
+        <span className="line-clamp-2 w-full break-words text-xs font-semibold" title={t.name}>
+          {t.name}
+        </span>
+      )}
+      <span className="muted text-[10px]">
+        {t.pageSizes.length} p. · {t.active ? 'Actif' : 'Brouillon'}
+      </span>
+      <div className="mt-1 flex gap-1">
+        <Link
+          className={`button ${iconButton}`}
+          href={`/templates/${t.id}`}
+          aria-label="Définir les champs"
+          title="Définir les champs"
+        >
+          <SlidersHorizontal size={14} />
+        </Link>
+        <button
+          className={iconButton}
+          aria-label="Renommer"
+          title="Renommer"
+          onClick={() => setRenaming(true)}
+        >
+          <Pencil size={14} />
+        </button>
+        <button
+          className={iconButton}
+          disabled={busy}
+          aria-label={t.active ? 'Désactiver' : 'Activer'}
+          title={t.active ? 'Désactiver' : 'Activer'}
+          onClick={() => run(() => api(`templates/${t.id}`, 'PATCH', { active: !t.active }))}
+        >
+          {t.active ? <PowerOff size={14} /> : <Power size={14} />}
+        </button>
+        <button
+          className={iconButton}
+          aria-label="Supprimer le modèle"
+          title="Supprimer le modèle"
+          onClick={() => {
+            if (confirm('Supprimer ce modèle ? Les documents existants seront conservés.'))
+              run(() => api(`templates/${t.id}`, 'DELETE'), 'Modèle supprimé.');
+          }}
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
 function Generate({
   id,
   duplicate,
@@ -809,9 +1031,27 @@ function Generate({
   run: Run;
   busy: boolean;
 }) {
-  const [template, setTemplate] = useState<Template | null>(null),
+  const router = useRouter(),
+    [template, setTemplate] = useState<Template | null>(null),
     [rows, setRows] = useState<Values[]>([{}]),
-    [action, setAction] = useState('download');
+    [activeRow, setActiveRow] = useState(0),
+    [previewValues, setPreviewValues] = useState<Values>({});
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setPreviewValues(rows[Math.min(activeRow, rows.length - 1)] ?? {}),
+      350,
+    );
+    return () => clearTimeout(timer);
+  }, [rows, activeRow]);
+  const previewSource = useCallback(async () => {
+    const r = await fetch(`/api/templates/${id}/render`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: previewValues }),
+    });
+    if (!r.ok) throw new Error((await r.json()).error ?? 'Aperçu indisponible.');
+    return r.arrayBuffer();
+  }, [id, previewValues]);
   useEffect(() => {
     run(async () => {
       const t = await api<Template>(`templates/${id}`);
@@ -838,152 +1078,168 @@ function Generate({
           Remplissez les champs. Votre document conservera sa mise en page et son format.
         </p>
       </div>
-      <form
-        className="mx-auto max-w-3xl"
-        onSubmit={(e) => {
-          e.preventDefault();
-          run(async () => {
-            const docs = await api<Doc[]>('documents', 'POST', { templateId: id, rows });
-            if (action === 'download') {
-              if (docs.length === 1) location.assign(`/api/documents/${docs[0].id}/pdf`);
-              else await downloadExport(docs.map((d) => d.id));
-            }
-            setRows([{}]);
-          }, 'Document(s) enregistré(s).');
-        }}
-      >
-        {rows.map((row, ri) => (
-          <section className="card mb-5" key={ri}>
-            <div className="mb-5 flex items-center justify-between">
-              <h2>Document {ri + 1}</h2>
-              {rows.length > 1 && (
-                <button
-                  type="button"
-                  className="secondary !p-2"
-                  aria-label="Retirer ce document"
-                  onClick={() => setRows(rows.filter((_, i) => i !== ri))}
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
-            </div>
-            <div className="grid gap-5 sm:grid-cols-2">
-              {fields.map((f) => (
-                <div
-                  key={f.key}
-                  className={f.type === 'textarea' || f.type === 'checkbox' ? 'sm:col-span-2' : ''}
-                >
-                  {f.type === 'checkbox' ? (
-                    <fieldset>
-                      <legend className="mb-2 text-sm font-semibold">
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const download =
+              (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'download';
+            run(async () => {
+              const docs = await api<Doc[]>('documents', 'POST', { templateId: id, rows });
+              if (download) {
+                if (docs.length === 1) {
+                  const r = await fetch(`/api/documents/${docs[0].id}/pdf`);
+                  if (!r.ok)
+                    throw new Error((await r.json()).error ?? 'Téléchargement impossible.');
+                  saveBlob(await r.blob(), `${template!.name}.pdf`);
+                } else await downloadExport(docs.map((d) => d.id));
+              }
+              router.push('/documents');
+            }, 'Document(s) enregistré(s).');
+          }}
+        >
+          {rows.map((row, ri) => (
+            <section
+              className={`card mb-5 ${rows.length > 1 && ri === activeRow ? 'ring-2 ring-emerald-500' : ''}`}
+              key={ri}
+              onFocusCapture={() => setActiveRow(ri)}
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <h2>Document {ri + 1}</h2>
+                {rows.length > 1 && (
+                  <button
+                    type="button"
+                    className="secondary !p-2"
+                    aria-label="Retirer ce document"
+                    onClick={() => setRows(rows.filter((_, i) => i !== ri))}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                {fields.map((f) => (
+                  <div
+                    key={f.key}
+                    className={
+                      f.type === 'textarea' || f.type === 'checkbox' ? 'sm:col-span-2' : ''
+                    }
+                  >
+                    {f.type === 'checkbox' ? (
+                      <fieldset>
+                        <legend className="mb-2 text-sm font-semibold">
+                          {f.label}
+                          {f.required ? ' *' : ''}
+                        </legend>
+                        <div className="flex flex-wrap gap-4">
+                          {f.options.map((o, i) => (
+                            <label className="!flex items-center gap-2" key={i}>
+                              <input
+                                type="checkbox"
+                                checked={
+                                  Array.isArray(row[f.key]) && (row[f.key] as number[]).includes(i)
+                                }
+                                onChange={(e) => {
+                                  const selected = Array.isArray(row[f.key])
+                                    ? (row[f.key] as number[])
+                                    : [];
+                                  update(
+                                    ri,
+                                    f.key,
+                                    e.target.checked
+                                      ? [...selected, i]
+                                      : selected.filter((n) => n !== i),
+                                  );
+                                }}
+                              />
+                              {typeof o === 'string' ? o : o.label}
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                    ) : (
+                      <label>
                         {f.label}
                         {f.required ? ' *' : ''}
-                      </legend>
-                      <div className="flex flex-wrap gap-4">
-                        {f.options.map((o, i) => (
-                          <label className="!flex items-center gap-2" key={i}>
-                            <input
-                              type="checkbox"
-                              checked={
-                                Array.isArray(row[f.key]) && (row[f.key] as number[]).includes(i)
-                              }
-                              onChange={(e) => {
-                                const selected = Array.isArray(row[f.key])
-                                  ? (row[f.key] as number[])
-                                  : [];
-                                update(
-                                  ri,
-                                  f.key,
-                                  e.target.checked
-                                    ? [...selected, i]
-                                    : selected.filter((n) => n !== i),
-                                );
-                              }}
-                            />
-                            {typeof o === 'string' ? o : o.label}
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
-                  ) : (
-                    <label>
-                      {f.label}
-                      {f.required ? ' *' : ''}
-                      {f.type === 'textarea' ? (
-                        <textarea
-                          rows={4}
-                          maxLength={f.max_chars || 5000}
-                          required={f.required}
-                          value={String(row[f.key] ?? f.default ?? '')}
-                          onChange={(e) => update(ri, f.key, e.target.value)}
-                        />
-                      ) : f.type === 'select' || f.type === 'rating' ? (
-                        <select
-                          required={f.required}
-                          value={String(row[f.key] ?? f.default ?? '')}
-                          onChange={(e) => update(ri, f.key, e.target.value)}
-                        >
-                          <option value="">Choisir…</option>
-                          {(f.type === 'rating'
-                            ? ['1', '2', '3', '4', '5']
-                            : f.options.filter((o) => typeof o === 'string')
-                          ).map((o) => (
-                            <option key={o} value={o}>
-                              {o}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type={
-                            f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text'
-                          }
-                          step={f.type === 'number' ? 'any' : undefined}
-                          required={f.required}
-                          maxLength={f.max_chars || 5000}
-                          value={formInputValue(f, row[f.key])}
-                          onChange={(e) => update(ri, f.key, e.target.value)}
-                        />
-                      )}
-                    </label>
-                  )}
-                </div>
-              ))}
-              {!fields.length && (
-                <p className="muted">
-                  Ce modèle ne contient aucun champ. Vous pouvez générer une copie du document.
-                </p>
-              )}
-            </div>
-          </section>
-        ))}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            className="secondary"
-            disabled={rows.length >= 100}
-            onClick={() => setRows([...rows, {}])}
-          >
-            <Plus size={16} />
-            Ajouter un document
-          </button>
-          <div className="flex flex-wrap gap-3">
-            <select
-              className="!w-auto"
-              aria-label="Action après génération"
-              value={action}
-              onChange={(e) => setAction(e.target.value)}
+                        {f.type === 'textarea' ? (
+                          <textarea
+                            rows={4}
+                            maxLength={f.max_chars || 5000}
+                            required={f.required}
+                            value={String(row[f.key] ?? f.default ?? '')}
+                            onChange={(e) => update(ri, f.key, e.target.value)}
+                          />
+                        ) : f.type === 'select' || f.type === 'rating' ? (
+                          <select
+                            required={f.required}
+                            value={String(row[f.key] ?? f.default ?? '')}
+                            onChange={(e) => update(ri, f.key, e.target.value)}
+                          >
+                            <option value="">Choisir…</option>
+                            {(f.type === 'rating'
+                              ? ['1', '2', '3', '4', '5']
+                              : f.options.filter((o) => typeof o === 'string')
+                            ).map((o) => (
+                              <option key={o} value={o}>
+                                {o}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={
+                              f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text'
+                            }
+                            step={f.type === 'number' ? 'any' : undefined}
+                            required={f.required}
+                            maxLength={f.max_chars || 5000}
+                            value={formInputValue(f, row[f.key])}
+                            onChange={(e) => update(ri, f.key, e.target.value)}
+                          />
+                        )}
+                      </label>
+                    )}
+                  </div>
+                ))}
+                {!fields.length && (
+                  <p className="muted">
+                    Ce modèle ne contient aucun champ. Vous pouvez générer une copie du document.
+                  </p>
+                )}
+              </div>
+            </section>
+          ))}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              className="secondary"
+              disabled={rows.length >= 100}
+              onClick={() => setRows([...rows, {}])}
             >
-              <option value="download">Enregistrer et télécharger</option>
-              <option value="save">Enregistrer seulement</option>
-            </select>
-            <button disabled={busy}>
-              <CheckCircle2 size={17} />
-              Générer {rows.length > 1 ? `les ${rows.length} documents` : 'le document'}
+              <Plus size={16} />
+              Ajouter un document
             </button>
+            <div className="flex flex-wrap gap-3">
+              <button disabled={busy} value="save">
+                <Save size={17} />
+                Générer
+              </button>
+              <button disabled={busy} value="download">
+                <Download size={17} />
+                Générer et télécharger
+              </button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+        <aside className="card xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-auto">
+          <h2 className="mb-1">Aperçu en direct</h2>
+          <p className="muted mb-4 text-xs">
+            {rows.length > 1 ? `Document ${Math.min(activeRow, rows.length - 1) + 1} · ` : ''}
+            Le document se met à jour pendant la saisie.
+          </p>
+          <PdfPreview source={previewSource} />
+        </aside>
+      </div>
     </>
   );
 }

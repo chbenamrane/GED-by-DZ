@@ -16,7 +16,11 @@ export function PdfEditor({ id, onError }: { id: string; onError: (message: stri
     [status, setStatus] = useState('');
   const canvas = useRef<HTMLCanvasElement>(null),
     pdf = useRef<Pdf | null>(null),
-    frame = useRef<HTMLDivElement>(null);
+    frame = useRef<HTMLDivElement>(null),
+    labelInput = useRef<HTMLInputElement>(null),
+    // Index of a field added this session whose key still follows its label.
+    fresh = useRef<number | null>(null);
+  const [focusLabel, setFocusLabel] = useState(0);
   useEffect(() => {
     let alive = true;
     api<Template>(`templates/${id}`)
@@ -99,6 +103,25 @@ export function PdfEditor({ id, onError }: { id: string; onError: (message: stri
     setFields((old) => old.map((f, i) => (i === index ? { ...f, ...patch } : f)));
     setDirty(true);
   }
+  useEffect(() => {
+    if (!focusLabel) return;
+    labelInput.current?.focus();
+    labelInput.current?.select();
+  }, [focusLabel]);
+  function slug(label: string, index: number) {
+    const base =
+      label
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 36) || 'champ';
+    const taken = new Set(fields.filter((_, i) => i !== index).map((f) => f.key));
+    let key = base;
+    for (let n = 2; taken.has(key); n++) key = `${base}_${n}`;
+    return key;
+  }
   function add() {
     const next: Field = {
       key: `champ_${Date.now()}`,
@@ -118,6 +141,8 @@ export function PdfEditor({ id, onError }: { id: string; onError: (message: stri
     };
     setFields([...fields, next]);
     setActive(fields.length);
+    fresh.current = fields.length;
+    setFocusLabel((n) => n + 1);
     setDirty(true);
   }
   function position(e: { clientX: number; clientY: number }) {
@@ -222,6 +247,7 @@ export function PdfEditor({ id, onError }: { id: string; onError: (message: stri
                 className={`!justify-start text-left text-xs ${active === i ? '' : 'secondary'}`}
                 key={i}
                 onClick={() => {
+                  fresh.current = null;
                   setActive(i);
                   setPage(f.page ?? 0);
                 }}
@@ -320,9 +346,20 @@ export function PdfEditor({ id, onError }: { id: string; onError: (message: stri
               <label>
                 Libellé
                 <input
+                  ref={labelInput}
                   value={current.label}
                   maxLength={120}
-                  onChange={(e) => update(active, { label: e.target.value })}
+                  onChange={(e) =>
+                    update(
+                      active,
+                      fresh.current === active
+                        ? { label: e.target.value, key: slug(e.target.value, active) }
+                        : { label: e.target.value },
+                    )
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.currentTarget.blur();
+                  }}
                 />
               </label>
               <label>
@@ -330,11 +367,12 @@ export function PdfEditor({ id, onError }: { id: string; onError: (message: stri
                 <input
                   value={current.key}
                   maxLength={40}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    fresh.current = null;
                     update(active, {
                       key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
-                    })
-                  }
+                    });
+                  }}
                 />
               </label>
               <label>
@@ -528,6 +566,7 @@ export function PdfEditor({ id, onError }: { id: string; onError: (message: stri
                   className="danger !p-2"
                   aria-label="Supprimer le champ"
                   onClick={() => {
+                    fresh.current = null;
                     setFields(fields.filter((_, i) => i !== active));
                     setActive(Math.max(0, active - 1));
                     setDirty(true);

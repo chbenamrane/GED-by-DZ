@@ -179,6 +179,26 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
           headers: { 'Content-Type': 'application/pdf', 'Cache-Control': 'no-store' },
         });
       }
+      if (path[2] === 'render' && method === 'POST') {
+        const b = z
+          .object({ values: z.record(z.string(), z.unknown()) })
+          .parse(await body(request));
+        const fields = template.fields as Field[];
+        const values: Values = {};
+        // Live preview: a field that is still incomplete or invalid is shown as typed, never rejected.
+        for (const f of fields) {
+          try {
+            Object.assign(values, validateValues([{ ...f, required: false }], b.values));
+          } catch {
+            const raw = b.values[f.key];
+            values[f.key] = typeof raw === 'string' ? raw.slice(0, 5000) : '';
+          }
+        }
+        const bytes = await renderPdf(template, values);
+        return new NextResponse(new Uint8Array(bytes), {
+          headers: { 'Content-Type': 'application/pdf', 'Cache-Control': 'no-store' },
+        });
+      }
       if (method === 'GET') return ok(template);
       await requireUser(true);
       if (method === 'PATCH') {
@@ -380,6 +400,10 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
           },
         });
       }
+      if (path[2] === 'view' && method === 'GET')
+        return new NextResponse(new Uint8Array(await renderPdf(d.template, d.values as Values)), {
+          headers: { 'Content-Type': 'application/pdf', 'Cache-Control': 'private, no-store' },
+        });
       if (method === 'GET') return ok(d);
       if (method === 'DELETE') {
         await db.document.delete({ where: { id: d.id } });

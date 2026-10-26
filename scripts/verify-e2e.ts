@@ -310,9 +310,8 @@ async function main() {
   await form.getByLabel('Nom du test modifié').fill('Document navigateur');
   await form.getByLabel('Oui', { exact: true }).check();
   await form.getByLabel('Note du test').fill('Saisie du formulaire.');
-  await form.getByLabel('Action après génération').selectOption('save');
-  await form.getByRole('button', { name: 'Générer le document', exact: true }).click();
-  await form.getByText('Document(s) enregistré(s).', { exact: true }).waitFor();
+  await form.getByRole('button', { name: 'Générer', exact: true }).click();
+  await form.waitForURL(`${url}/documents`);
   const uiDocs = await db.document.findMany({ where: { templateId: template.id } });
   documentIds.push(...uiDocs.map((d) => d.id));
   assert.equal(uiDocs.length, 3);
