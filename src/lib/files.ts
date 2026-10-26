@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-export const storageRoot = () => path.resolve(process.env.STORAGE_DIR ?? './storage');
+export const storageRoot = () => path.resolve(/* turbopackIgnore: true */ process.env.STORAGE_DIR ?? './storage');
 export function safePath(name:string) {
   if (!/^[a-zA-Z0-9_-]+\.pdf$/.test(name)) throw new Error('Chemin de fichier invalide.');
   return path.join(storageRoot(),'templates',name);
