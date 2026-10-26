@@ -1,2 +1,4 @@
 import { Workspace } from '@/components/workspace';
-export default function Page(){return <Workspace section="templates"/>;}
+export default function Page() {
+  return <Workspace section="templates" />;
+}

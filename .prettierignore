@@ -1,0 +1,10 @@
+node_modules
+.next
+storage
+src/generated
+public/pdf.worker.min.mjs
+package-lock.json
+prisma/migrations
+.env
+
+next-env.d.ts
