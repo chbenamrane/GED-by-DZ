@@ -27,7 +27,8 @@ if (-not (Test-Path -LiteralPath $dataDirectory)) {
 & "$pgBin\pg_ctl.exe" -D $dataDirectory status 2>$null
 if ($LASTEXITCODE -ne 0) {
     $log = Join-Path $projectRoot 'storage\postgres.log'
-    $process = Start-Process -FilePath "$pgBin\pg_ctl.exe" -ArgumentList @('-D',"`"$dataDirectory`"",'-l',"`"$log`"",'-w','start') -WindowStyle Hidden -PassThru -Wait
+    $process = Start-Process -FilePath "$pgBin\pg_ctl.exe" -ArgumentList @('-D',"`"$dataDirectory`"",'-l',"`"$log`"",'-w','start') -WindowStyle Hidden -PassThru
+    if (-not $process.WaitForExit(30000)) { throw 'Délai de démarrage PostgreSQL dépassé.' }
     if ($process.ExitCode -ne 0) { throw 'Impossible de démarrer PostgreSQL local.' }
 }
 node --env-file=.env --input-type=module -e "import pg from 'pg';const u=new URL(process.env.DATABASE_URL);const c=new pg.Client({connectionString:process.env.DATABASE_URL.replace('/ged_by_dz','/postgres')});await c.connect();const r=await c.query('SELECT 1 FROM pg_database WHERE datname = '+String.fromCharCode(39)+'ged_by_dz'+String.fromCharCode(39));if(!r.rowCount)await c.query('CREATE DATABASE ged_by_dz');await c.end();console.log('Base locale GED By DZ prête sur 127.0.0.1:55432.');"
