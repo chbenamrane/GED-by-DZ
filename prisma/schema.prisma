@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum Role {
+  ADMIN
+  USER
+}
+model User {
+  id String @id @default(cuid())
+  username String @unique
+  passwordHash String
+  email String? @unique
+  role Role @default(USER)
+  createdAt DateTime @default(now())
+  sessions Session[]
+  resetTokens ResetToken[]
+  documents Document[]
+}
+model Session {
+  id String @id
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  expiresAt DateTime
+  @@index([expiresAt])
+}
+model ResetToken {
+  id String @id
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId, expiresAt])
+}
+model RateLimit {
+  id String @id
+  count Int @default(0)
+  expiresAt DateTime
+}
+model Folder {
+  id String @id @default(cuid())
+  name String
+  createdAt DateTime @default(now())
+  templates Template[]
+}
+model Template {
+  id String @id @default(cuid())
+  name String
+  color String @default("#087e70")
+  active Boolean @default(false)
+  folderId String?
+  folder Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  filePath String
+  fields Json @default("[]")
+  pageSizes Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  documents Document[]
+  @@index([folderId, active])
+}
+model Document {
+  id String @id @default(cuid())
+  templateId String
+  template Template @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  username String
+  values Json
+  downloadedAt DateTime?
+  emailedAt DateTime?
+  emailedTo String?
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+  @@index([templateId])
+}
+model Setting {
+  id String @id @default("smtp")
+  value Json
+}
+model ImportRun {
+  id String @id
+  completedAt DateTime @default(now())
+  summary Json
+}
