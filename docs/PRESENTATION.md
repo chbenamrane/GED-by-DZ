@@ -1,15 +1,16 @@
 # GED By DZ — vidéos de présentation
 
-Deux versions de **56 secondes**, en français et en anglais. Format 16:9, 1280 × 720, 30 images/seconde, WebM avec piste audio Opus. Motion graphics originaux aux couleurs du projet : vert, bleu encre et fond clair. Interfaces illustrées, sans captures ni données réelles. Effets sonores synthétisés : transitions, touches de saisie et signature finale. Pas de musique ni de voix de synthèse provisoire.
+Deux versions de **56 secondes**, en français et en anglais. Format 16:9, 1920 × 1080, 30 images/seconde, MP4 H.264 avec audio AAC. Motion graphics aux couleurs du projet (écrans illustrés avec des données fictives), sept séquences de 8 secondes : import, éditeur, génération, historique, formats et droits, signature. Bande son : effets sonores synthétisés (clics, frappes, transitions, cloche de validation) et fond musical discret. La voix off est à ajouter.
 
 ## Fichiers et reproduction
 
-- Français : `storage/presentation/ged-by-dz-fr.webm`
-- Anglais : `storage/presentation/ged-by-dz-en.webm`
-- Vérification : `node scripts/check-presentation.mjs` (lecture, durée, dimensions, piste audio et captures).
-- Générateur : `node scripts/render-presentation.mjs` (Microsoft Edge et dépendances npm installés).
+- `storage/presentation/ged-by-dz-fr.mp4` et `ged-by-dz-en.mp4` : vidéos avec effets et fond musical, sans voix.
+- `storage/presentation/sfx-fr.wav` et `sfx-en.wav` : la bande son seule, pour un montage externe.
+- Rendu : `npm run video` (ou `node scripts/video/render.mjs fr` / `en`). Nécessite Microsoft Edge et FFmpeg ; environ une minute par langue.
+- Sources : `scripts/video/scene.html` (animation, textes, repères sonores), `scripts/video/audio.mjs` (synthèse sonore), `scripts/video/render.mjs` (capture et encodage).
+- Images fixes de contrôle : `node scripts/video/render.mjs fr --stills 5,20,45 --out <dossier>`.
 
-Les vidéos sont générées localement et exclues de Git. Le rendu prend quelques minutes. La voix off est à ajouter au montage, en conservant les effets sonores. Export final conseillé : MP4 H.264, audio AAC, 1280 × 720, durée de 56 secondes. Avec FFmpeg disponible, un exemple de mixage figure ci-dessous. Les voix doivent être calées aux repères indiqués, avec de courtes pauses entre les séquences.
+Les vidéos sont générées localement et exclues de Git.
 
 ## Direction vocale
 
@@ -75,10 +76,10 @@ GED By DZ. From PDF to form, from form to document. Create, reuse, simplify.
 
 ## Intégration de la voix off
 
-Avec une piste `voice-fr.wav` déjà calée sur les 56 secondes, exécuter depuis la racine du dépôt :
+Avec `voice-fr.wav` calée sur 56 secondes dans `storage/presentation/`, depuis la racine du dépôt. La musique et les effets baissent automatiquement sous la voix :
 
 ```powershell
-ffmpeg -i storage/presentation/ged-by-dz-fr.webm -i storage/presentation/voice-fr.wav -filter_complex "[0:a]volume=0.4[sfx];[sfx][1:a]amix=inputs=2:duration=first:normalize=0[a]" -map 0:v:0 -map "[a]" -c:v libx264 -pix_fmt yuv420p -c:a aac -b:a 192k -t 56 -movflags +faststart storage/presentation/ged-by-dz-fr-final.mp4
+ffmpeg -i storage/presentation/ged-by-dz-fr.mp4 -i storage/presentation/voice-fr.wav -filter_complex "[1:a]asplit[v][sc];[0:a][sc]sidechaincompress=threshold=0.02:ratio=6:attack=20:release=400[duck];[duck][v]amix=inputs=2:duration=first:normalize=0[a]" -map 0:v:0 -map "[a]" -c:v copy -c:a aac -b:a 256k -t 56 -movflags +faststart storage/presentation/ged-by-dz-fr-final.mp4
 ```
 
-Remplacer `fr` par `en` pour la version anglaise. Écouter le résultat pour ajuster le niveau des effets sous la voix. L’envoi par e-mail présenté nécessite une configuration SMTP dans l’application.
+Remplacer `fr` par `en` pour la version anglaise. L'image n'est pas ré-encodée. L'envoi par e-mail présenté nécessite une configuration SMTP dans l'application.

@@ -17,7 +17,8 @@
     "test:e2e": "tsx scripts/verify-e2e.ts",
     "db:local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-local-db.ps1",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "video": "node scripts/video/render.mjs fr && node scripts/video/render.mjs en"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",

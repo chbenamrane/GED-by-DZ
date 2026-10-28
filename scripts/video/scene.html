@@ -1,0 +1,1539 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #050f17;
+        color: #fff;
+        font-family: 'Segoe UI Variable Display', 'Segoe UI', Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #stage {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        background: #06131c;
+      }
+      .a {
+        position: absolute;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        perspective: 2400px;
+      }
+      .blob {
+        position: absolute;
+        width: 1500px;
+        height: 1500px;
+        border-radius: 50%;
+      }
+      .dots {
+        position: absolute;
+        inset: 0;
+        opacity: 0.5;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1.5px, transparent 1.6px);
+        background-size: 48px 48px;
+      }
+      .vig {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+      }
+      .h1 {
+        font-size: 84px;
+        font-weight: 800;
+        letter-spacing: -2.5px;
+        line-height: 1.04;
+        white-space: nowrap;
+      }
+      .h1 .w {
+        display: inline-block;
+      }
+      .h1 .ac {
+        color: #2dd4bf;
+      }
+      .sub {
+        font-size: 33px;
+        font-weight: 400;
+        color: #a9c1cf;
+        letter-spacing: -0.2px;
+        white-space: nowrap;
+      }
+      .wm {
+        font-weight: 800;
+        letter-spacing: -3px;
+        line-height: 1;
+        white-space: nowrap;
+      }
+      .wm span {
+        font-weight: 300;
+        color: #7fe0d0;
+      }
+      .win {
+        position: absolute;
+        background: #f7f9fb;
+        border-radius: 22px;
+        overflow: hidden;
+        color: #162c3f;
+        box-shadow:
+          0 50px 120px rgba(0, 0, 0, 0.55),
+          0 0 0 1px rgba(255, 255, 255, 0.14);
+      }
+      .bar {
+        height: 52px;
+        background: #e9eef3;
+        display: flex;
+        align-items: center;
+        padding: 0 22px;
+        gap: 9px;
+        border-bottom: 1px solid #d9e1e8;
+      }
+      .bar i {
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: #c5d1db;
+        display: block;
+      }
+      .bar .url {
+        margin-left: 22px;
+        background: #fff;
+        border-radius: 99px;
+        padding: 6px 22px;
+        font-size: 14px;
+        color: #657789;
+      }
+      .body {
+        position: relative;
+      }
+      .paper {
+        position: absolute;
+        background: #fff;
+        border-radius: 6px;
+        box-shadow:
+          0 18px 50px rgba(0, 0, 0, 0.28),
+          0 2px 6px rgba(0, 0, 0, 0.12);
+        overflow: visible;
+      }
+      .fld {
+        position: absolute;
+        border: 2px solid #14b8a0;
+        background: rgba(20, 184, 160, 0.13);
+        border-radius: 6px;
+        color: #0d3b3a;
+        font-size: 17px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        white-space: nowrap;
+      }
+      .fld .tag {
+        position: absolute;
+        left: -2px;
+        top: -22px;
+        background: #087e70;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 5px 5px 5px 0;
+        letter-spacing: 0.3px;
+      }
+      .card {
+        position: absolute;
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e0e8ee;
+        box-shadow: 0 6px 18px rgba(22, 44, 63, 0.08);
+        overflow: hidden;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 99px;
+        font-weight: 700;
+      }
+      .btn {
+        position: absolute;
+        background: #087e70;
+        color: #fff;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 8px 20px rgba(8, 126, 112, 0.35);
+      }
+      .glass {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 22px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+      }
+      .ripple {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        margin: -30px 0 0 -30px;
+        border-radius: 50%;
+        border: 3px solid #2dd4bf;
+      }
+      .cursor {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 34px;
+        height: 34px;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <script>
+      const LANG = new URLSearchParams(location.search).get('lang') || 'fr';
+      const L = (fr, en) => (LANG === 'fr' ? fr : en);
+      const CUES = [];
+      let OFF = 0;
+      const cue = (type, t, vol = 1, pan = 0) => CUES.push({ type, t: t + OFF, vol, pan });
+      const panOf = (x) => Math.max(-0.6, Math.min(0.6, (x - 960) / 1600));
+
+      const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+      const ease = {
+        lin: (t) => t,
+        out: (t) => 1 - (1 - t) ** 3,
+        io: (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2),
+        back: (t) => 1 + 2.9 * (t - 1) ** 3 + 1.9 * (t - 1) ** 2,
+      };
+      const pr = (t, s, d, e = ease.out) => e(cl((t - s) / d));
+      const lerp = (a, b, k) => a + (b - a) * k;
+
+      function put(e, o) {
+        const { x = 0, y = 0, s = 1, r = 0, rx = 0, ry = 0 } = o;
+        e.style.transform = `translate(${x}px,${y}px) rotateX(${rx}deg) rotateY(${ry}deg) rotate(${r}deg) scale(${s})`;
+        if (o.o !== undefined) {
+          e.style.opacity = o.o;
+          e.style.visibility = o.o <= 0.003 ? 'hidden' : 'visible';
+        }
+        if (o.b !== undefined) e.style.filter = o.b > 0.15 ? `blur(${o.b}px)` : 'none';
+      }
+      // pop-in with overshoot: element scales up and fades in at time s
+      function pop(e, t, s, d = 0.55, o = {}) {
+        const k = pr(t, s, d, ease.back),
+          f = pr(t, s, d * 0.6);
+        put(e, {
+          x: o.x || 0,
+          y: (1 - f) * (o.y ?? 24) + (o.dy || 0),
+          s: lerp(o.from ?? 0.82, 1, k) * (o.scale || 1),
+          r: o.r || 0,
+          rx: o.rx || 0,
+          ry: o.ry || 0,
+          o: f,
+        });
+      }
+      function mk(parent, cls, html, css) {
+        const d = document.createElement('div');
+        d.className = 'a ' + (cls || '');
+        if (html) d.innerHTML = html;
+        if (css) d.style.cssText = css;
+        parent.appendChild(d);
+        return d;
+      }
+      function kf(t, keys) {
+        if (t <= keys[0][0]) return [keys[0][1], keys[0][2]];
+        for (let i = 1; i < keys.length; i++) {
+          if (t <= keys[i][0]) {
+            const a = keys[i - 1],
+              b = keys[i],
+              k = ease.io(cl((t - a[0]) / (b[0] - a[0])));
+            return [lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
+          }
+        }
+        const l = keys[keys.length - 1];
+        return [l[1], l[2]];
+      }
+
+      let uid = 0;
+      const LOGO = (s = 64) => {
+        const g = 'lg' + uid++;
+        return `<svg width="${s}" height="${s}" viewBox="0 0 64 64"><defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#087e70"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#${g})"/><path d="M20 12h17l10 10v28a3 3 0 0 1-3 3H20a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3z" fill="#fff"/><path d="M37 12v10h10z" fill="#b6ece3"/><rect x="23" y="29" width="18" height="4.5" rx="2.2" fill="#087e70"/><rect x="23" y="38" width="12" height="4.5" rx="2.2" fill="#7fd9cc"/></svg>`;
+      };
+      const P = {
+        text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
+        date: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+        list: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+        check: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/>',
+        tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+        folder:
+          '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+        search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+        lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+        mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+        dl: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+        zip: '<rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M12 3v6M10 6h4M10 9h4"/><rect x="9.5" y="12" width="5" height="5" rx="1.2"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+        user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+        pdf: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/>',
+      };
+      const I = (n, size = 22, color = 'currentColor', sw = 2) =>
+        `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`;
+
+      function paperEl(parent, w, h, seed = 0, css = '') {
+        const e = mk(parent, 'paper', '', `width:${w}px;height:${h}px;${css}`);
+        const pad = w * 0.09;
+        let s = `<div style="position:absolute;left:${pad}px;top:${pad}px;width:${w * 0.42}px;height:${Math.max(6, w * 0.035)}px;border-radius:99px;background:#9fb3c2"></div>`;
+        const lh = Math.max(4, w * 0.022),
+          gap = lh * 2.2;
+        let y = pad * 2 + w * 0.07,
+          i = 0;
+        while (y < h - pad - lh) {
+          const wd = [0.82, 0.72, 0.9, 0.55, 0.78, 0.66, 0.85][(i + seed) % 7];
+          s += `<div style="position:absolute;left:${pad}px;top:${y}px;width:${(w - pad * 2) * wd}px;height:${lh}px;border-radius:99px;background:#e3e9ef"></div>`;
+          y += gap;
+          i++;
+        }
+        e.innerHTML = s;
+        return e;
+      }
+      function fieldEl(paper, x, y, w, h, tag, text = '') {
+        const f = mk(
+          paper,
+          'fld',
+          (tag ? `<span class="tag">${tag}</span>` : '') + `<span class="ft">${text}</span>`,
+          `left:${x}px;top:${y}px;width:${w}px;height:${h}px`,
+        );
+        return f;
+      }
+      function win(parent, x, y, w, h, url) {
+        const d = mk(
+          parent,
+          'win',
+          `<div class="bar"><i></i><i></i><i></i><div class="url">${url}</div></div>`,
+          `left:${x}px;top:${y}px;width:${w}px;height:${h}px`,
+        );
+        const body = document.createElement('div');
+        body.className = 'body';
+        body.style.height = h - 52 + 'px';
+        d.appendChild(body);
+        d.body = body;
+        return d;
+      }
+      function head(r, lines, sub, o = {}) {
+        const h = mk(r, 'h1', '', `left:140px;top:${o.top ?? 112}px;font-size:${o.size ?? 84}px`);
+        const ws = [];
+        lines.forEach((line, li) => {
+          const d = document.createElement('div');
+          line.split(' ').forEach((w, i) => {
+            const s = document.createElement('span');
+            s.className =
+              'w' + ((lines.length > 1 ? li === lines.length - 1 : i >= 1) ? ' ac' : '');
+            s.textContent = w + ' ';
+            d.appendChild(s);
+            ws.push(s);
+          });
+          h.appendChild(d);
+        });
+        const sb = mk(r, 'sub', sub, `left:143px;top:${o.subTop ?? 232}px;${o.subCss || ''}`);
+        return { ws, sb };
+      }
+      function revealHead(hd, t, s = 0.15) {
+        hd.ws.forEach((w, i) => {
+          const k = pr(t, s + i * 0.1, 0.65);
+          put(w, { y: (1 - k) * 46, o: k, b: (1 - k) * 12 });
+        });
+        const k = pr(t, s + hd.ws.length * 0.1 + 0.1, 0.6);
+        put(hd.sb, { y: (1 - k) * 20, o: k });
+      }
+      function typer(span, str, ts, cps, pan = 0) {
+        for (let i = 0; i < str.length; i++)
+          if (str[i] !== ' ') cue('tick', ts + i / cps, 0.55, pan);
+        return (t) => {
+          const n = Math.floor(cl((t - ts) * cps, 0, str.length));
+          span.textContent = str.slice(0, n);
+          return n;
+        };
+      }
+      const CURSOR_SVG =
+        '<svg viewBox="0 0 34 34" width="34" height="34"><path d="M5 3l22 11-9 3-4 10z" fill="#fff" stroke="#0b1a26" stroke-width="2" stroke-linejoin="round"/></svg>';
+      function mkCursor(r, keys, clicks) {
+        const cur = mk(r, 'cursor', CURSOR_SVG);
+        const rips = clicks.map((c) => {
+          const [x, y] = kf(c, keys);
+          cue('click', c, 0.8, panOf(x));
+          const e = mk(r, 'ripple', '', `left:${x}px;top:${y}px`);
+          return { e, c };
+        });
+        return (t) => {
+          const [x, y] = kf(t, keys);
+          const o = pr(t, keys[0][0] - 0.3, 0.3) * (1 - pr(t, keys[keys.length - 1][0] + 0.1, 0.3));
+          let sq = 1;
+          clicks.forEach((c) => {
+            const d = t - c;
+            if (d > 0 && d < 0.16) sq = 0.82;
+          });
+          put(cur, { x, y, s: sq, o });
+          rips.forEach(({ e, c }) => {
+            const k = cl((t - c) / 0.55);
+            put(e, { s: 0.3 + k * 1.5, o: t >= c && k < 1 ? (1 - k) * 0.9 : 0 });
+          });
+          return [x, y];
+        };
+      }
+
+      const scenes = [];
+      function scene(start, end, build, update) {
+        const root = mk(document.getElementById('stage'), 'scene', '', '');
+        OFF = start;
+        const ctx = build(root);
+        OFF = 0;
+        scenes.push({ start, end, root, update, ctx });
+        if (start > 0) cue('whoosh', start - 0.32, 0.9);
+      }
+
+      const stage = document.getElementById('stage');
+      const bg = mk(
+        stage,
+        '',
+        '',
+        'inset:0;background:linear-gradient(135deg,#06131c 0%,#0a2230 55%,#08262b 100%)',
+      );
+      const blobs = [
+        mk(
+          stage,
+          'blob',
+          '',
+          'background:radial-gradient(circle,rgba(20,184,160,.30),transparent 62%)',
+        ),
+        mk(
+          stage,
+          'blob',
+          '',
+          'background:radial-gradient(circle,rgba(56,120,220,.22),transparent 62%)',
+        ),
+        mk(
+          stage,
+          'blob',
+          '',
+          'background:radial-gradient(circle,rgba(20,184,160,.16),transparent 62%)',
+        ),
+      ];
+      mk(stage, 'dots');
+      const header = mk(
+        stage,
+        '',
+        `<div style="display:flex;align-items:center;gap:14px">${LOGO(46)}<div class="wm" style="font-size:30px;letter-spacing:-1px">GED <span>By DZ</span></div></div>`,
+        'left:140px;top:40px',
+      );
+      const progress = mk(
+        stage,
+        '',
+        '',
+        'left:140px;top:1036px;width:1640px;height:4px;display:flex;gap:10px',
+      );
+      const segs = [];
+      for (let i = 0; i < 7; i++) {
+        const sgm = document.createElement('div');
+        sgm.style.cssText =
+          'flex:1;height:4px;border-radius:3px;background:rgba(255,255,255,.12);position:relative;overflow:hidden';
+        sgm.innerHTML =
+          '<div style="position:absolute;left:0;top:0;bottom:0;background:#2dd4bf;width:0"></div>';
+        progress.appendChild(sgm);
+        segs.push(sgm.firstChild);
+      }
+      const WX = 160,
+        WY = 340; // main window origin (stage px)
+
+      // ============ SCENE 1 — hook (0–8)
+      scene(
+        0,
+        8,
+        (r) => {
+          const intro = mk(
+            r,
+            '',
+            `<div style="display:flex;align-items:center;gap:30px">${LOGO(150)}<div class="wm" style="font-size:118px">GED <span>By DZ</span></div></div>`,
+            'inset:0;display:flex;align-items:center;justify-content:center',
+          );
+          const hd = head(
+            r,
+            [L('Vos PDF.', 'Your PDFs.'), L('Devenus formulaires.', 'Become forms.')],
+            L(
+              'Créez, remplissez et générez vos documents en quelques clics.',
+              'Create, fill in and generate your documents in a few clicks.',
+            ),
+            { top: 330, size: 96, subTop: 585 },
+          );
+          const PX = 1230,
+            PY = 180,
+            PW = 440,
+            PH = 622;
+          const rig = mk(
+            r,
+            '',
+            '',
+            `left:${PX}px;top:${PY}px;width:${PW}px;height:${PH}px;transform-style:preserve-3d`,
+          );
+          const back2 = paperEl(rig, PW, PH, 2, 'opacity:.35');
+          const back1 = paperEl(rig, PW, PH, 4, 'opacity:.6');
+          const front = paperEl(rig, PW, PH, 0);
+          const tagPdf = mk(
+            front,
+            '',
+            'PDF',
+            'right:24px;top:24px;background:#e8f1ee;color:#087e70;font-weight:800;font-size:15px;padding:5px 12px;border-radius:8px',
+          );
+          const flds = [
+            [40, 130, 260, 42, L('Nom', 'Name'), 'Aa'],
+            [40, 215, 180, 42, 'Date', '28/10'],
+            [40, 300, 42, 42, L('Case', 'Box'), '✓'],
+            [40, 385, 350, 42, L('Signature', 'Signature'), ''],
+          ].map(([x, y, w, h, tag, tx]) => fieldEl(front, x, y, w, h, tag, tx));
+          const fTimes = flds.map((f, i) => {
+            const y = [130, 215, 300, 385][i];
+            const t = 3.2 + ((y - 60) / 500) * 1.8;
+            cue('pop', t, 0.7, 0.25);
+            return t;
+          });
+          cue('shimmer', 5.1, 0.8, 0.2);
+          const scan = mk(
+            front,
+            '',
+            '',
+            `left:-20px;width:${PW + 40}px;height:5px;border-radius:3px;background:linear-gradient(90deg,transparent,#2dd4bf,transparent);box-shadow:0 0 30px 8px rgba(45,212,191,.6)`,
+          );
+          const ready = mk(
+            r,
+            'pill',
+            `${I('tick', 26, '#06131c', 3)} ${L('Formulaire prêt', 'Form ready')}`,
+            `left:${PX + 60}px;top:900px;background:#2dd4bf;color:#06131c;padding:14px 26px;font-size:24px`,
+          );
+          cue('chime', 5.4, 0.7, 0.3);
+          cue('boom', 0.35, 0.9);
+          cue('whoosh', 1.75, 0.8);
+          const chips = [
+            mk(
+              r,
+              'pill',
+              'PDF',
+              `left:1100px;top:250px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);padding:10px 20px;font-size:22px`,
+            ),
+          ];
+          return { intro, hd, rig, back1, back2, front, flds, fTimes, scan, ready, chips, PH };
+        },
+        (t, c) => {
+          const k = pr(t, 0.2, 0.9, ease.back);
+          const out = pr(t, 1.7, 0.7, ease.io);
+          put(c.intro, {
+            s: lerp(0.7, 1, k) * (1 + out * 0.25),
+            o: pr(t, 0.2, 0.5) * (1 - out),
+            b: out * 14,
+          });
+          revealHead(c.hd, t, 2.3);
+          const kk = pr(t, 2.0, 1.1, ease.out);
+          const fl = Math.sin(t * 1.3) * 7;
+          put(c.rig, { x: (1 - kk) * 200, y: fl, ry: -22 + (1 - kk) * 25, rx: 8, r: 2, o: kk });
+          put(c.back1, { x: 26, y: 26 });
+          put(c.back2, { x: 52, y: 52 });
+          const sy = 60 + 500 * cl((t - 3.2) / 1.8);
+          put(c.scan, { y: sy, o: t > 3.2 && t < 5.0 ? 1 : 0 });
+          c.flds.forEach((f, i) => pop(f, t, c.fTimes[i], 0.5, { y: 0, from: 0.6 }));
+          pop(c.ready, t, 5.4, 0.6, { y: 30 });
+          put(c.chips[0], { o: pr(t, 2.6, 0.6) * (1 - pr(t, 4.8, 0.5)), x: pr(t, 2.6, 0.8) * 40 });
+        },
+      );
+
+      // ============ SCENE 2 — import & organise (8–16)
+      scene(
+        8,
+        16,
+        (r) => {
+          const hd = head(
+            r,
+            [L('Importez. Organisez.', 'Import. Organize.')],
+            L('Vos modèles, classés par dossier.', 'Your templates, sorted into folders.'),
+          );
+          const w = win(r, WX, WY, 1600, 660, L('ged.local / modèles', 'ged.local / templates'));
+          const B = w.body;
+          mk(
+            B,
+            '',
+            '',
+            'left:0;top:0;width:280px;height:608px;background:#eef2f6;border-right:1px solid #dde5ec',
+          );
+          mk(
+            B,
+            '',
+            L('Dossiers', 'Folders'),
+            'left:28px;top:26px;font-size:15px;font-weight:700;color:#657789;letter-spacing:1px;text-transform:uppercase',
+          );
+          const hl = mk(
+            B,
+            '',
+            '',
+            'left:14px;top:70px;width:252px;height:48px;border-radius:12px;background:#d4efe8',
+          );
+          const folders = [
+            [L('Tous', 'All'), 5],
+            [L('Contrats', 'Contracts'), 2],
+            [L('Factures', 'Invoices'), 2],
+            [L('RH', 'HR'), 2],
+          ];
+          const counts = folders.map(([n, c], i) => {
+            mk(B, '', I('folder', 22, '#087e70'), `left:30px;top:${82 + i * 52}px`);
+            mk(B, '', n, `left:68px;top:${80 + i * 52}px;font-size:19px;font-weight:600`);
+            return mk(
+              B,
+              '',
+              String(c),
+              `right:${1600 - 252}px;top:${81 + i * 52}px;font-size:16px;color:#657789;font-weight:700;width:40px;text-align:right`,
+            );
+          });
+          counts.forEach((e, i) => {
+            e.style.left = '222px';
+            e.style.right = 'auto';
+          });
+          mk(
+            B,
+            '',
+            L('Modèles', 'Templates'),
+            'left:320px;top:26px;font-size:30px;font-weight:800',
+          );
+          const imp = mk(
+            B,
+            'btn',
+            `${I('plus', 22, '#fff', 3)} ${L('Importer un PDF', 'Import a PDF')}`,
+            'left:1300px;top:18px;width:260px;height:50px',
+          );
+          const names = [
+            [L('Contrat de travail', 'Employment contract'), L('Contrats', 'Contracts'), 3],
+            [L('Facture', 'Invoice'), L('Factures', 'Invoices'), 1],
+            [L('Attestation', 'Certificate'), L('RH', 'HR'), 1],
+            [L('Bon de commande', 'Purchase order'), L('Factures', 'Invoices'), 2],
+            [L('Fiche employé', 'Employee file'), L('RH', 'HR'), 2],
+            [L('Contrat de location', 'Lease agreement'), L('Contrats', 'Contracts'), 4],
+          ];
+          const cards = names.map(([n, f, pg], i) => {
+            const x = 320 + (i % 3) * 400,
+              y = 100 + Math.floor(i / 3) * 260;
+            const c = mk(B, 'card', '', `left:${x}px;top:${y}px;width:370px;height:230px`);
+            mk(
+              c,
+              '',
+              '',
+              'left:0;top:0;right:0;height:150px;background:linear-gradient(#e8f1ee,#f1f6f4)',
+            );
+            paperEl(c, 96, 128, i, 'left:137px;top:22px');
+            mk(c, '', n, 'left:20px;top:162px;font-size:20px;font-weight:700');
+            mk(
+              c,
+              '',
+              `${pg} page${pg > 1 ? 's' : ''} · ${f}`,
+              'left:20px;top:194px;font-size:15px;color:#657789',
+            );
+            if (i === 5)
+              mk(
+                c,
+                'pill',
+                L('NOUVEAU', 'NEW'),
+                'right:14px;top:14px;background:#087e70;color:#fff;font-size:12px;padding:4px 12px;letter-spacing:.5px',
+              );
+            return c;
+          });
+          const file = mk(
+            r,
+            'glass',
+            `<div style="display:flex;align-items:center;gap:14px;padding:14px 20px;color:#fff;font-size:20px;font-weight:600">${I('pdf', 34, '#2dd4bf')} ${L('contrat-location.pdf', 'lease-agreement.pdf')}</div>`,
+            'left:0;top:0;width:330px;height:70px;border-radius:16px;background:rgba(10,34,48,.85)',
+          );
+          const keys = [
+            [2.2, 1720, 330],
+            [3.5, 1560, 800],
+            [3.9, 1560, 800],
+            [5.0, 330, 560],
+            [5.2, 330, 540],
+            [6.2, 330, 540],
+            [6.9, 900, 520],
+          ];
+          const cur = mkCursor(r, keys, [5.2]);
+          const rip = mk(
+            B,
+            '',
+            '',
+            `left:${1120 + 185 - 60}px;top:${360 + 115 - 60}px;width:120px;height:120px;border-radius:50%;border:4px solid #14b8a0`,
+          );
+          names.forEach((_, i) => {
+            if (i < 5) cue('pop', 0.9 + i * 0.22, 0.6, panOf(WX + 320 + (i % 3) * 400));
+          });
+          cue('swipe', 2.2, 0.7, 0.4);
+          cue('thump', 3.9, 0.9, 0.3);
+          cue('pop', 3.95, 0.8, 0.3);
+          cue('shimmer', 4.1, 0.6, 0.3);
+          cue('click', 5.2, 0, 0);
+          cue('pop', 5.35, 0.6, -0.3);
+          return { hd, w, hl, counts, cards, file, cur, rip, imp };
+        },
+        (t, c) => {
+          revealHead(c.hd, t, 0.1);
+          const k = pr(t, 0.2, 0.9);
+          put(c.w, { y: (1 - k) * 90, rx: (1 - k) * 12, o: k, s: lerp(0.94, 1, k) });
+          c.cards.forEach((cd, i) => {
+            let o = 1,
+              sc = 1;
+            if (i < 5) pop(cd, t, 0.9 + i * 0.22, 0.55, { y: 30, from: 0.88 });
+            else pop(cd, t, 3.9, 0.6, { y: 0, from: 0.7 });
+            if (t > 5.2 && i !== 0 && i !== 5)
+              cd.style.opacity = String(
+                Math.min(+cd.style.opacity, lerp(1, 0.22, pr(t, 5.25, 0.5))),
+              );
+            const hi = i === 0 || i === 5;
+            cd.style.boxShadow =
+              hi && t > 5.3 ? `0 0 0 3px #14b8a0, 0 14px 40px rgba(20,184,160,.35)` : '';
+          });
+          put(c.hl, { y: pr(t, 5.2, 0.45, ease.io) * 52 });
+          c.counts[0].textContent = t < 3.95 ? '5' : '6';
+          c.counts[1].textContent = t < 3.95 ? '1' : '2';
+          const [cx, cy] = c.cur(t);
+          const fk = pr(t, 2.1, 0.3) * (1 - pr(t, 3.9, 0.2));
+          put(c.file, { x: cx + 18, y: cy + 14, s: 1 - pr(t, 3.5, 0.4) * 0.15, o: fk });
+          const rk = cl((t - 3.9) / 0.7);
+          put(c.rip, { s: 0.6 + rk * 0.9, o: t > 3.9 && rk < 1 ? 1 - rk : 0 });
+          put(c.imp, { s: 1 + Math.sin(cl((t - 3.9) / 0.4) * Math.PI) * 0.05 });
+        },
+      );
+
+      // ============ SCENE 3 — editor (16–24)
+      scene(
+        16,
+        24,
+        (r) => {
+          const hd = head(
+            r,
+            [L('Placez vos champs.', 'Place your fields.')],
+            L('Un éditeur visuel, sur toutes les pages.', 'A visual editor across every page.'),
+          );
+          const w = win(r, WX, WY, 1600, 660, L('ged.local / éditeur', 'ged.local / editor'));
+          const B = w.body;
+          mk(
+            B,
+            '',
+            '',
+            'left:0;top:0;width:270px;height:608px;background:#eef2f6;border-right:1px solid #dde5ec',
+          );
+          mk(
+            B,
+            '',
+            L('Champs', 'Fields'),
+            'left:28px;top:26px;font-size:15px;font-weight:700;color:#657789;letter-spacing:1px;text-transform:uppercase',
+          );
+          const tools = [
+            ['text', L('Texte', 'Text')],
+            ['date', 'Date'],
+            ['list', L('Liste', 'List')],
+            ['check', L('Case à cocher', 'Checkbox')],
+          ];
+          const toolEls = tools.map(([ic, n], i) =>
+            mk(
+              B,
+              '',
+              `${I(ic, 26, '#087e70')}<span style="font-size:19px;font-weight:600">${n}</span>`,
+              `left:24px;top:${70 + i * 72}px;width:222px;height:56px;border-radius:12px;background:#fff;border:1px solid #dae3ea;display:flex;align-items:center;gap:14px;padding:0 18px;box-shadow:0 2px 6px rgba(22,44,63,.06)`,
+            ),
+          );
+          mk(B, '', '', 'left:270px;top:0;width:990px;height:608px;background:#e6edf3');
+          const thumbs = [0, 1, 2].map((i) => {
+            const th = mk(
+              B,
+              '',
+              '',
+              `left:300px;top:${60 + i * 96}px;width:60px;height:84px;border-radius:5px;background:#fff;border:2px solid ${i === 0 ? '#14b8a0' : '#cfd9e2'};box-shadow:0 3px 8px rgba(22,44,63,.1)`,
+            );
+            th.innerHTML =
+              '<div style="position:absolute;left:8px;top:10px;right:24px;height:4px;border-radius:2px;background:#cfd9e2"></div><div style="position:absolute;left:8px;top:22px;right:12px;height:3px;border-radius:2px;background:#e3e9ef"></div><div style="position:absolute;left:8px;top:30px;right:16px;height:3px;border-radius:2px;background:#e3e9ef"></div>';
+            return th;
+          });
+          const holder = mk(B, '', '', 'left:574px;top:34px;width:382px;height:540px');
+          const p1 = paperEl(holder, 382, 540, 0, 'left:0;top:0');
+          const p2 = paperEl(holder, 382, 540, 3, 'left:0;top:0');
+          const f1 = fieldEl(p1, 30, 100, 200, 36, L('Nom complet', 'Full name'), '');
+          const f2 = fieldEl(p1, 30, 170, 140, 36, 'Date', '');
+          const f3 = fieldEl(p1, 30, 240, 36, 36, L('Case', 'Box'), '');
+          f3.innerHTML += `<span style="position:absolute;left:46px;white-space:nowrap;font-size:15px;color:#162c3f">${L("J'accepte", 'I agree')}</span>`;
+          const f4 = fieldEl(p2, 30, 150, 260, 36, L('Adresse', 'Address'), '');
+          mk(
+            B,
+            '',
+            L('Propriétés', 'Properties'),
+            'left:1290px;top:26px;font-size:15px;font-weight:700;color:#657789;letter-spacing:1px;text-transform:uppercase',
+          );
+          const props = mk(
+            B,
+            '',
+            '',
+            'left:1290px;top:70px;width:280px;height:200px;background:#fff;border-radius:14px;border:1px solid #dde5ec;padding:18px 20px;font-size:17px;line-height:2',
+          );
+          const toast = mk(
+            B,
+            'pill',
+            `${I('tick', 22, '#fff', 3)} ${L('Modèle enregistré', 'Template saved')}`,
+            'left:1290px;top:520px;background:#087e70;color:#fff;padding:12px 22px;font-size:18px',
+          );
+          const ghost = mk(
+            r,
+            'pill',
+            '',
+            'left:0;top:0;background:#fff;color:#087e70;padding:10px 18px;font-size:17px;box-shadow:0 14px 30px rgba(0,0,0,.35);border:2px solid #14b8a0',
+          );
+          const keys = [
+            [0.5, 1300, 430],
+            [1.0, 294, 490],
+            [1.1, 294, 490],
+            [1.9, 864, 543],
+            [2.3, 294, 562],
+            [2.4, 294, 562],
+            [3.1, 834, 613],
+            [3.5, 294, 706],
+            [3.6, 294, 706],
+            [4.2, 781, 683],
+            [4.7, 488, 585],
+            [5.3, 294, 490],
+            [5.4, 294, 490],
+            [6.1, 894, 593],
+            [6.9, 1300, 520],
+          ];
+          const cur = mkCursor(r, keys, [1.0, 2.3, 3.5, 4.7, 5.3]);
+          [1.9, 3.1, 4.2, 6.1].forEach((d) => cue('pop', d, 0.8, panOf(800)));
+          cue('swipe', 4.75, 0.6);
+          cue('chime', 6.6, 0.7, 0.3);
+          const drags = [
+            [1.1, 1.9, 'Aa ' + L('Texte', 'Text')],
+            [2.4, 3.1, 'Date'],
+            [3.6, 4.2, L('Case', 'Box')],
+            [5.4, 6.1, 'Aa ' + L('Texte', 'Text')],
+          ];
+          return {
+            hd,
+            w,
+            toolEls,
+            thumbs,
+            p1,
+            p2,
+            f1,
+            f2,
+            f3,
+            f4,
+            props,
+            toast,
+            ghost,
+            cur,
+            drags,
+          };
+        },
+        (t, c) => {
+          revealHead(c.hd, t, 0.1);
+          const k = pr(t, 0.2, 0.9);
+          put(c.w, { y: (1 - k) * 90, rx: (1 - k) * 12, o: k, s: lerp(0.94, 1, k) });
+          const [cx, cy] = c.cur(t);
+          let g = null;
+          c.drags.forEach(([a, b, label]) => {
+            if (t > a && t < b + 0.05) g = label;
+          });
+          c.ghost.textContent = g || '';
+          put(c.ghost, { x: cx + 16, y: cy + 10, o: g ? 1 : 0, s: 1.02 });
+          pop(c.f1, t, 1.9, 0.45, { y: 0, from: 0.7 });
+          pop(c.f2, t, 3.1, 0.45, { y: 0, from: 0.7 });
+          pop(c.f3, t, 4.2, 0.45, { y: 0, from: 0.7 });
+          pop(c.f4, t, 6.1, 0.45, { y: 0, from: 0.7 });
+          const pg = pr(t, 4.75, 0.45, ease.io);
+          put(c.p1, { x: -pg * 120, o: 1 - pg });
+          put(c.p2, { x: (1 - pg) * 120, o: pg });
+          c.thumbs.forEach((th, i) => {
+            th.style.borderColor = (i === 0 ? pg < 0.5 : i === 1 && pg >= 0.5)
+              ? '#14b8a0'
+              : '#cfd9e2';
+          });
+          const sel =
+            t < 3.1
+              ? [L('Texte', 'Text'), 1, L('Nom complet', 'Full name')]
+              : t < 4.2
+                ? ['Date', 1, 'Date']
+                : t < 4.75
+                  ? [L('Case à cocher', 'Checkbox'), 1, L('Case', 'Box')]
+                  : [L('Texte', 'Text'), 2, L('Adresse', 'Address')];
+          c.props.innerHTML =
+            t < 1.9
+              ? `<span style="color:#657789">${L('Aucun champ sélectionné', 'No field selected')}</span>`
+              : `<div><b>Type</b> &nbsp;${sel[0]}</div><div><b>Page</b> &nbsp;${sel[1]} / 3</div><div><b>${L('Nom', 'Name')}</b> &nbsp;${sel[2]}</div><div><b>${L('Obligatoire', 'Required')}</b> &nbsp;<span style="color:#087e70;font-weight:800">✓</span></div>`;
+          pop(c.toast, t, 6.6, 0.5, { y: 20 });
+        },
+      );
+
+      // ============ SCENE 4 — fill & generate (24–32)
+      scene(
+        24,
+        32,
+        (r) => {
+          const hd = head(
+            r,
+            [L('Remplissez. Générez.', 'Fill in. Generate.')],
+            L(
+              'Un document, ou tout un lot en une fois.',
+              'One document, or a whole batch at once.',
+            ),
+          );
+          const FX = 160,
+            FY = 340;
+          const form = mk(
+            r,
+            'card',
+            '',
+            `left:${FX}px;top:${FY}px;width:620px;height:640px;border-radius:22px;box-shadow:0 40px 100px rgba(0,0,0,.5);color:#162c3f`,
+          );
+          mk(
+            form,
+            '',
+            L('Remplir le formulaire', 'Fill in the form'),
+            'left:30px;top:26px;font-size:27px;font-weight:800',
+          );
+          const inputs = [
+            [L('Nom complet', 'Full name'), 'Amine Benali', 100],
+            [L('Société', 'Company'), 'Atlas Conseil', 205],
+            [L('Date', 'Date'), '28/10/2026', 310],
+          ];
+          const ins = inputs.map(([lb, val, y]) => {
+            mk(form, '', lb, `left:30px;top:${y}px;font-size:15px;font-weight:700;color:#657789`);
+            const box = mk(
+              form,
+              '',
+              '<span class="v"></span><span class="cr" style="display:inline-block;width:2px;height:24px;background:#087e70;margin-left:2px;vertical-align:middle"></span>',
+              `left:30px;top:${y + 28}px;width:560px;height:56px;border-radius:12px;border:2px solid #d3dde7;background:#fff;padding:0 18px;display:flex;align-items:center;font-size:21px;font-weight:600`,
+            );
+            return { box, v: box.querySelector('.v'), cr: box.querySelector('.cr'), val, y };
+          });
+          const cb = mk(
+            form,
+            '',
+            `<div class="bx" style="width:30px;height:30px;border-radius:8px;border:2px solid #b9c7d3;display:flex;align-items:center;justify-content:center;color:#fff">${I('tick', 20, '#fff', 3.4)}</div><span style="font-size:20px;font-weight:600">${L('Accord signé', 'Signed agreement')}</span>`,
+            'left:30px;top:430px;display:flex;align-items:center;gap:14px',
+          );
+          const gen = mk(
+            form,
+            'btn',
+            `${I('pdf', 26, '#fff')} ${L('Générer le document', 'Generate document')}`,
+            'left:30px;top:520px;width:560px;height:68px;font-size:22px',
+          );
+          // preview sheets
+          const sheetBox = mk(r, '', '', 'left:960px;top:350px;width:438px;height:620px');
+          const mkSheet = () => {
+            const p = paperEl(sheetBox, 438, 620, 1, 'left:0;top:0');
+            const fs = [
+              [30, 120, 300, 40, L('Nom', 'Name')],
+              [30, 195, 300, 40, L('Société', 'Company')],
+              [30, 270, 190, 40, 'Date'],
+              [30, 345, 40, 40, L('Case', 'Box')],
+            ].map(([x, y, w, h, tag]) => fieldEl(p, x, y, w, h, tag, ''));
+            return { p, fs };
+          };
+          const copies = [4, 3, 2, 1].map(() => mkSheet());
+          const main = mkSheet();
+          copies.forEach((s) => {
+            s.fs[0].querySelector('.ft').textContent = 'Amine Benali';
+            s.fs[1].querySelector('.ft').textContent = 'Atlas Conseil';
+            s.fs[2].querySelector('.ft').textContent = '28/10/2026';
+            s.fs[3].querySelector('.ft').textContent = '✓';
+          });
+          const badge = mk(
+            r,
+            'pill',
+            '×5',
+            'left:1380px;top:330px;width:78px;height:78px;border-radius:50%;background:#2dd4bf;color:#06131c;font-size:34px;justify-content:center;box-shadow:0 10px 30px rgba(45,212,191,.5)',
+          );
+          const toast = mk(
+            r,
+            'pill',
+            `${I('tick', 24, '#fff', 3)} ${L('5 documents générés', '5 documents generated')}`,
+            'left:1020px;top:940px;background:#087e70;color:#fff;padding:14px 28px;font-size:23px',
+          );
+          const keys = [
+            [0.0, 1000, 500],
+            [0.3, 380, 494],
+            [1.9, 380, 494],
+            [2.0, 380, 599],
+            [3.5, 380, 599],
+            [3.6, 380, 704],
+            [4.8, 330, 704],
+            [4.9, 200, 790],
+            [5.5, 200, 790],
+            [5.6, 470, 892],
+            [6.8, 700, 700],
+          ];
+          const cur = mkCursor(r, keys, [0.3, 2.0, 3.6, 4.9, 5.6]);
+          const tp = ins.map((x, i) => typer(x.v, x.val, [0.6, 2.3, 3.9][i], [11, 12, 9][i], -0.3));
+          const mirror = [
+            main.fs[0].querySelector('.ft'),
+            main.fs[1].querySelector('.ft'),
+            main.fs[2].querySelector('.ft'),
+          ];
+          cue('thump', 5.7, 0.6);
+          cue('whoosh', 5.95, 0.9);
+          cue('pop', 6.1, 0.5);
+          cue('pop', 6.25, 0.5);
+          cue('pop', 6.4, 0.5);
+          cue('pop', 6.55, 0.5);
+          cue('chime', 6.95, 0.9, 0.2);
+          cue('shimmer', 7.0, 0.5, 0.2);
+          cue('pop', 4.95, 0.6, -0.3);
+          return { hd, form, ins, cb, gen, main, copies, badge, toast, cur, tp, mirror };
+        },
+        (t, c) => {
+          revealHead(c.hd, t, 0.1);
+          const k = pr(t, 0.2, 0.9);
+          put(c.form, { x: (1 - k) * -80, o: k });
+          const act = t < 2.0 ? 0 : t < 3.6 ? 1 : 2;
+          const stat = t < 0.3 ? -1 : t < 2.0 ? 0 : t < 3.6 ? 1 : t < 4.8 ? 2 : -1;
+          c.ins.forEach((x, i) => {
+            x.box.style.borderColor = stat === i ? '#14b8a0' : '#d3dde7';
+            x.box.style.boxShadow = stat === i ? '0 0 0 4px rgba(20,184,160,.18)' : 'none';
+            x.cr.style.display =
+              stat === i && Math.floor(t * 2.5) % 2 === 0 ? 'inline-block' : 'none';
+          });
+          c.tp.forEach((f, i) => {
+            f(t);
+            c.mirror[i].textContent = c.ins[i].v.textContent;
+          });
+          const on = t > 4.95;
+          const bx = c.cb.querySelector('.bx');
+          bx.style.background = on ? '#087e70' : 'transparent';
+          bx.style.borderColor = on ? '#087e70' : '#b9c7d3';
+          c.main.fs[3].querySelector('.ft').textContent = on ? '✓' : '';
+          c.cur(t);
+          const press = Math.sin(cl((t - 5.6) / 0.25) * Math.PI);
+          put(c.gen, { s: 1 - press * 0.04 });
+          c.gen.style.opacity = t > 5.7 && t < 6.2 ? 0.8 : 1;
+          // sheets entrance + fan-out
+          const e = pr(t, 0.3, 0.9);
+          const fan = pr(t, 6.0, 0.9, ease.io);
+          const pcs = [
+            c.main.p,
+            ...c.copies
+              .slice()
+              .reverse()
+              .map((s) => s.p),
+          ];
+          pcs.forEach((p, i) => {
+            const fx = -50 + i * 82,
+              fr = i * 2.6;
+            const delay = pr(t, 6.0 + i * 0.12, 0.7, ease.back);
+            put(p, {
+              x: lerp((1 - e) * 120, fx, i === 0 ? fan : delay),
+              y: lerp(0, i * 6, delay),
+              s: lerp(1, 0.8, i === 0 ? fan : delay),
+              r: lerp(0, fr, i === 0 ? fan : delay),
+              o: i === 0 ? e : t > 6.0 ? Math.min(1, (t - 6.0 - i * 0.05) * 4) : 0,
+            });
+          });
+          pop(c.badge, t, 6.7, 0.5, { y: 0, from: 0.4 });
+          pop(c.toast, t, 6.95, 0.5, { y: 20 });
+        },
+      );
+
+      // ============ SCENE 5 — history & share (32–40)
+      scene(
+        32,
+        40,
+        (r) => {
+          const hd = head(
+            r,
+            [L('Retrouvez. Partagez.', 'Find. Share.')],
+            L('Historique, recherche, PDF, ZIP et e-mail.', 'History, search, PDF, ZIP and email.'),
+          );
+          const w = win(r, WX, WY, 1600, 660, L('ged.local / documents', 'ged.local / documents'));
+          const B = w.body;
+          mk(
+            B,
+            '',
+            `<div style="display:flex;align-items:center;gap:12px;height:100%;padding:0 18px;font-size:21px;font-weight:600">${I('search', 24, '#657789')}<span class="q"></span><span class="cr" style="width:2px;height:26px;background:#087e70;display:inline-block"></span></div>`,
+            'left:40px;top:24px;width:520px;height:52px;border-radius:12px;border:2px solid #14b8a0;background:#fff;box-shadow:0 0 0 4px rgba(20,184,160,.16)',
+          );
+          const q = B.querySelector('.q'),
+            cr = B.querySelector('.cr');
+          mk(
+            B,
+            '',
+            `<span style="margin-left:70px">${L('Document', 'Document')}</span><span style="position:absolute;left:480px">${L('Modèle', 'Template')}</span><span style="position:absolute;left:760px">Date</span>`,
+            'left:40px;top:100px;width:1060px;font-size:14px;font-weight:700;color:#657789;letter-spacing:1px;text-transform:uppercase',
+          );
+          const data = [
+            [
+              L('Contrat – A. Benali', 'Contract – A. Benali'),
+              L('Contrat de travail', 'Employment contract'),
+              '28/10/2026',
+              1,
+            ],
+            [L('Facture 2026-114', 'Invoice 2026-114'), L('Facture', 'Invoice'), '27/10/2026', 0],
+            [
+              L('Attestation – S. Haddad', 'Certificate – S. Haddad'),
+              L('Attestation', 'Certificate'),
+              '27/10/2026',
+              0,
+            ],
+            [
+              L('Contrat – L. Mansouri', 'Contract – L. Mansouri'),
+              L('Contrat de travail', 'Employment contract'),
+              '24/10/2026',
+              1,
+            ],
+            [
+              L('Bon de commande 88', 'Purchase order 88'),
+              L('Bon de commande', 'Purchase order'),
+              '22/10/2026',
+              0,
+            ],
+            [
+              L('Contrat – K. Saidi', 'Contract – K. Saidi'),
+              L('Contrat de location', 'Lease agreement'),
+              '20/10/2026',
+              1,
+            ],
+          ];
+          const matchIdx = [0, 3, 5];
+          const rows = data.map(([n, m, d], i) => {
+            const row = mk(
+              B,
+              '',
+              `<div class="cbx" style="position:absolute;left:18px;top:16px;width:24px;height:24px;border-radius:7px;border:2px solid #b9c7d3;display:flex;align-items:center;justify-content:center">${I('tick', 16, '#fff', 3.6)}</div><span style="position:absolute;left:70px;top:15px;font-size:20px;font-weight:700">${n}</span><span style="position:absolute;left:480px;top:17px;font-size:18px;color:#4a6071">${m}</span><span style="position:absolute;left:760px;top:17px;font-size:18px;color:#4a6071">${d}</span><span style="position:absolute;right:20px;top:14px;border-radius:8px;background:#e1f3ee;color:#087e70;font-size:14px;font-weight:800;padding:5px 12px">PDF</span>`,
+              `left:40px;top:${140 + i * 64}px;width:1060px;height:56px;border-radius:12px;background:#fff;border:1px solid #e0e8ee;box-shadow:0 2px 6px rgba(22,44,63,.05)`,
+            );
+            return row;
+          });
+          const bar = mk(B, '', '', 'left:40px;top:540px;width:1060px;height:56px');
+          const b1 = mk(
+            bar,
+            'btn',
+            `${I('dl', 22, '#fff')} ${L('Télécharger PDF', 'Download PDF')}`,
+            'left:16px;top:0;width:220px;height:52px;font-size:17px',
+          );
+          const b2 = mk(
+            bar,
+            'btn',
+            `${I('zip', 22, '#fff')} ${L('Exporter ZIP', 'Export ZIP')}`,
+            'left:252px;top:0;width:220px;height:52px;font-size:17px;background:#134a6b;box-shadow:0 8px 20px rgba(19,74,107,.3)',
+          );
+          const b3 = mk(
+            bar,
+            'btn',
+            `${I('mail', 22, '#fff')} ${L('Envoyer par e-mail', 'Send by email')}`,
+            'left:488px;top:0;width:250px;height:52px;font-size:17px;background:#5b4bdb;box-shadow:0 8px 20px rgba(91,75,219,.3)',
+          );
+          const outs = [
+            [
+              I('dl', 30, '#087e70'),
+              L('3 PDF téléchargés', '3 PDFs downloaded'),
+              L('Téléchargement', 'Download'),
+              '#e1f3ee',
+            ],
+            [
+              I('zip', 30, '#134a6b'),
+              'documents.zip',
+              L('3 fichiers · 214 Ko', '3 files · 214 KB'),
+              '#e0eef6',
+            ],
+            [
+              I('mail', 30, '#5b4bdb'),
+              L('E-mail envoyé', 'Email sent'),
+              'contact@exemple.fr',
+              '#ebe8fb',
+            ],
+          ].map(([ic, t1, t2, bgc], i) => {
+            const o = mk(
+              B,
+              'card',
+              `<div style="position:absolute;left:20px;top:22px;width:62px;height:62px;border-radius:16px;background:${bgc};display:flex;align-items:center;justify-content:center">${ic}</div><div style="position:absolute;left:100px;top:22px;font-size:21px;font-weight:800">${t1}</div><div style="position:absolute;left:100px;top:56px;font-size:16px;color:#657789">${t2}</div><div class="pb" style="position:absolute;left:100px;top:90px;width:260px;height:6px;border-radius:3px;background:#e3e9ef"><div style="height:6px;border-radius:3px;background:#14b8a0;width:0"></div></div><div class="ck" style="position:absolute;right:20px;top:34px;width:38px;height:38px;border-radius:50%;background:#14b8a0;display:flex;align-items:center;justify-content:center">${I('tick', 22, '#fff', 3.4)}</div>`,
+              `left:1140px;top:${24 + i * 128}px;width:420px;height:112px`,
+            );
+            return o;
+          });
+          const mini = [0, 1, 2].map((i) => paperEl(r, 44, 58, i, 'left:0;top:0'));
+          const env = mk(r, '', I('mail', 54, '#a89cff', 2.2), 'left:0;top:0');
+          const keys = [
+            [0.3, 700, 520],
+            [0.4, 400, 440],
+            [2.0, 400, 440],
+            [2.9, 228, 564],
+            [3.3, 228, 628],
+            [3.7, 228, 692],
+            [4.4, 326, 960],
+            [5.4, 562, 960],
+            [6.4, 808, 960],
+            [7.4, 1000, 800],
+          ];
+          const cur = mkCursor(r, keys, [0.4, 2.9, 3.3, 3.7, 4.4, 5.4, 6.4]);
+          const tq = typer(q, L('Contrat', 'Contract'), 0.7, 8, -0.3);
+          [2.9, 3.3, 3.7].forEach((x) => cue('pop', x + 0.05, 0.4));
+          cue('pop', 3.95, 0.6);
+          cue('pop', 4.55, 0.7, 0.4);
+          cue('chime', 5.35, 0.5, 0.4);
+          cue('thump', 6.1, 0.7, 0.4);
+          cue('pop', 6.1, 0.6, 0.4);
+          cue('send', 6.5, 0.9, 0.2);
+          cue('chime', 7.15, 0.9, 0.3);
+          cue('shimmer', 7.2, 0.5, 0.3);
+          return { hd, w, rows, matchIdx, q, cr, tq, bar, b1, b2, b3, outs, mini, env, cur };
+        },
+        (t, c) => {
+          revealHead(c.hd, t, 0.1);
+          const k = pr(t, 0.2, 0.9);
+          put(c.w, { y: (1 - k) * 90, rx: (1 - k) * 12, o: k, s: lerp(0.94, 1, k) });
+          c.tq(t);
+          c.cr.style.display = t < 2.4 && Math.floor(t * 2.5) % 2 === 0 ? 'inline-block' : 'none';
+          const f = pr(t, 1.8, 0.7, ease.io);
+          const ent = pr(t, 0.6, 0.9);
+          const ticks = [2.9, 3.3, 3.7];
+          c.rows.forEach((row, i) => {
+            const m = c.matchIdx.indexOf(i);
+            const tgt = m >= 0 ? m : i;
+            const delay = pr(t, 0.45 + i * 0.07, 0.5);
+            put(row, {
+              y: lerp(0, (tgt - i) * 64, f) + (1 - delay) * 24,
+              o: delay * (m >= 0 ? 1 : 1 - f),
+            });
+            const cb = row.querySelector('.cbx');
+            const sel = m >= 0 && t > ticks[m];
+            cb.style.background = sel ? '#087e70' : 'transparent';
+            cb.style.borderColor = sel ? '#087e70' : '#b9c7d3';
+            row.style.background = sel ? '#eaf7f3' : '#fff';
+          });
+          pop(c.bar, t, 3.9, 0.5, { y: 24 });
+          c.cur(t);
+          const clk = [4.4, 5.4, 6.4];
+          [c.b1, c.b2, c.b3].forEach((b, i) =>
+            put(b, { s: 1 - Math.sin(cl((t - clk[i]) / 0.2) * Math.PI) * 0.05 }),
+          );
+          // download card
+          pop(c.outs[0], t, 4.5, 0.5, { y: 0, from: 0.85 });
+          c.outs[0].querySelector('.pb div').style.width = pr(t, 4.6, 0.8, ease.io) * 100 + '%';
+          put(c.outs[0].querySelector('.ck'), {
+            s: pr(t, 5.35, 0.4, ease.back),
+            o: pr(t, 5.35, 0.2),
+          });
+          // zip: little sheets fly into card
+          const zc = [1560 + 0, 0];
+          c.mini.forEach((m, i) => {
+            const k2 = pr(t, 5.5 + i * 0.1, 0.6, ease.io);
+            const sx = 270 + 60,
+              sy = 564 + i * 64 - 30;
+            const ex = WX + 1140 + 50,
+              ey = WY + 52 + 24 + 128 + 25;
+            put(m, {
+              x: lerp(sx, ex, k2),
+              y: lerp(sy, ey, k2),
+              s: lerp(1, 0.7, k2),
+              r: lerp(0, (i - 1) * 14, k2),
+              o: t > 5.5 && t < 6.25 ? 1 : 0,
+            });
+          });
+          pop(c.outs[1], t, 6.1, 0.5, { y: 0, from: 0.85 });
+          c.outs[1].querySelector('.pb div').style.width = pr(t, 6.2, 0.5, ease.io) * 100 + '%';
+          put(c.outs[1].querySelector('.ck'), {
+            s: pr(t, 6.7, 0.4, ease.back),
+            o: pr(t, 6.7, 0.2),
+          });
+          // mail: envelope flies out
+          const ek = pr(t, 6.5, 0.7, ease.io);
+          const ex0 = WX + 40 + 488 + 16 + 125,
+            ey0 = WY + 52 + 540 + 26;
+          const ex1 = WX + 1140 + 51,
+            ey1 = WY + 52 + 24 + 256 + 28;
+          put(c.env, {
+            x: lerp(ex0, ex1, ek) - 27,
+            y: lerp(ey0, ey1, ek) - Math.sin(ek * Math.PI) * 140 - 27,
+            s: lerp(1.1, 0.7, ek),
+            r: -ek * 25,
+            o: t > 6.5 && t < 7.15 ? 1 : 0,
+          });
+          pop(c.outs[2], t, 7.1, 0.5, { y: 0, from: 0.85 });
+          c.outs[2].querySelector('.pb div').style.width = '100%';
+          put(c.outs[2].querySelector('.ck'), {
+            s: pr(t, 7.3, 0.4, ease.back),
+            o: pr(t, 7.3, 0.2),
+          });
+        },
+      );
+
+      // ============ SCENE 6 — formats preserved + permissions (40–48)
+      scene(
+        40,
+        48,
+        (r) => {
+          const hdA = head(
+            r,
+            [L('Vos formats, préservés.', 'Your formats, preserved.')],
+            L(
+              "Pages, dimensions et orientations d'origine.",
+              'Original pages, dimensions and orientations.',
+            ),
+          );
+          const hdB = head(
+            r,
+            [L('Chacun ses droits.', 'Everyone their rights.')],
+            L(
+              "L'administrateur gère tout, l'utilisateur ses documents.",
+              'Admins manage everything, users their own documents.',
+            ),
+          );
+          const A = mk(r, '', '', 'inset:0');
+          const specs = [
+            [280, 456, 300, 424, 'A4 · ' + L('Portrait', 'Portrait'), '210 × 297 mm'],
+            [660, 456, 600, 424, 'A3 · ' + L('Paysage', 'Landscape'), '420 × 297 mm'],
+            [1340, 580, 300, 300, L('Format libre', 'Custom size'), '148 × 148 mm'],
+          ];
+          const sheets = specs.map(([x, y, w, h, l1, l2], i) => {
+            const ghost = mk(
+              A,
+              '',
+              '',
+              `left:${x}px;top:${y}px;width:${w}px;height:${h}px;border:3px dashed rgba(255,255,255,.35);border-radius:8px`,
+            );
+            const p = paperEl(A, w, h, i * 2, `left:${x}px;top:${y}px`);
+            fieldEl(p, w * 0.1, h * 0.28, w * 0.55, 34, '', '');
+            fieldEl(p, w * 0.1, h * 0.28 + 62, w * 0.35, 34, '', '');
+            const tag = mk(
+              A,
+              '',
+              `<div style="font-size:26px;font-weight:800">${l1}</div><div style="font-size:21px;color:#7fe0d0;font-weight:600;margin-top:2px">${l2}</div>`,
+              `left:${x}px;top:${y + h + 24}px;width:${w}px;text-align:center`,
+            );
+            const hl = mk(
+              A,
+              '',
+              '',
+              `left:${x}px;top:${y - 30}px;height:3px;background:#2dd4bf;width:${w}px;transform-origin:left`,
+            );
+            const ck = mk(
+              A,
+              'pill',
+              I('tick', 22, '#06131c', 3.4),
+              `left:${x + w - 22}px;top:${y - 22}px;width:44px;height:44px;border-radius:50%;background:#2dd4bf;justify-content:center`,
+            );
+            const snapT = 1.0 + i * 0.6;
+            cue('snap', snapT + 0.5, 0.8, panOf(x + w / 2));
+            return { ghost, p, tag, hl, ck, snapT, x };
+          });
+          const Bn = mk(r, '', '', 'inset:0');
+          const mkRole = (x, name, sub, icon, locked, color) => {
+            const card = mk(Bn, 'glass', '', `left:${x}px;top:350px;width:700px;height:640px`);
+            mk(
+              card,
+              '',
+              `<div style="width:76px;height:76px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center">${I(icon, 40, '#06131c', 2.2)}</div><div><div style="font-size:34px;font-weight:800">${name}</div><div style="font-size:19px;color:#a9c1cf;margin-top:4px">${sub}</div></div>`,
+              'left:36px;top:34px;display:flex;align-items:center;gap:22px',
+            );
+            const docs = [0, 1, 2, 3, 4, 5].map((i) => {
+              const d = mk(
+                card,
+                '',
+                `<div style="position:absolute;left:0;top:0;right:0;bottom:0;border-radius:16px;background:#f7f9fb;box-shadow:0 8px 20px rgba(0,0,0,.3)"></div>`,
+                `left:${36 + (i % 3) * 214}px;top:${170 + Math.floor(i / 3) * 210}px;width:196px;height:190px`,
+              );
+              paperEl(d, 86, 112, i, 'left:55px;top:20px');
+              mk(
+                d,
+                '',
+                `Doc 00${i + 1}`,
+                'left:0;right:0;top:148px;text-align:center;color:#162c3f;font-size:18px;font-weight:700',
+              );
+              const lk = mk(
+                d,
+                '',
+                I('lock', 44, '#fff', 2.2),
+                'left:0;top:0;right:0;bottom:0;border-radius:16px;background:rgba(6,19,28,.86);display:flex;align-items:center;justify-content:center',
+              );
+              return { d, lk, locked: locked.includes(i) };
+            });
+            return { card, docs };
+          };
+          const admin = mkRole(
+            150,
+            L('Administrateur', 'Administrator'),
+            L(
+              'Modèles · dossiers · utilisateurs · paramètres',
+              'Templates · folders · users · settings',
+            ),
+            'shield',
+            [],
+            '#2dd4bf',
+          );
+          const user = mkRole(
+            1070,
+            L('Utilisateur', 'User'),
+            L('Uniquement ses propres documents', 'Only their own documents'),
+            'user',
+            [1, 2, 4, 5],
+            '#9db8ff',
+          );
+          user.docs.forEach((d, i) => {
+            if (d.locked) cue('lock', 5.6 + [1, 2, 4, 5].indexOf(i) * 0.28, 0.8, 0.4);
+          });
+          cue('chime', 6.9, 0.7, 0);
+          cue('whoosh', 3.75, 0.7);
+          return { hdA, hdB, A, sheets, Bn, admin, user };
+        },
+        (t, c) => {
+          const sw = pr(t, 3.9, 0.5, ease.lin);
+          revealHead(c.hdA, t, 0.1);
+          c.hdA.ws.forEach((w) => {
+            w.style.opacity = String(+w.style.opacity * (1 - sw));
+          });
+          c.hdA.sb.style.opacity = String(+c.hdA.sb.style.opacity * (1 - sw));
+          revealHead(c.hdB, t - 3.9, 0.1);
+          put(c.A, { o: 1 - sw, y: -sw * 30 });
+          c.sheets.forEach((s, i) => {
+            const e = pr(t, 0.4 + i * 0.12, 0.6);
+            put(s.ghost, { o: e });
+            const k = pr(t, s.snapT, 0.5, ease.back);
+            put(s.p, { x: (1 - k) * 34, y: (1 - k) * 22, o: pr(t, s.snapT, 0.3) });
+            put(s.tag, { o: pr(t, s.snapT + 0.4, 0.4), y: (1 - pr(t, s.snapT + 0.4, 0.4)) * 14 });
+            put(s.hl, { s: 1, o: pr(t, 0.6 + i * 0.15, 0.3) * 0.0 });
+            s.hl.style.transform = `scaleX(${pr(t, s.snapT + 0.1, 0.6)})`;
+            s.hl.style.opacity = String(pr(t, s.snapT + 0.1, 0.2));
+            pop(s.ck, t, s.snapT + 0.7, 0.4, { y: 0, from: 0.4 });
+          });
+          const bk = pr(t, 4.2, 0.7, ease.out);
+          put(c.Bn, { o: pr(t, 4.2, 0.5, ease.lin), y: (1 - bk) * 50 });
+          c.admin.docs.forEach((d, i) => {
+            pop(d.d, t, 4.5 + i * 0.07, 0.4, { y: 16, from: 0.9 });
+            d.lk.style.opacity = '0';
+          });
+          c.user.docs.forEach((d, i) => {
+            pop(d.d, t, 4.5 + i * 0.07, 0.4, { y: 16, from: 0.9 });
+            const li = [1, 2, 4, 5].indexOf(i);
+            d.lk.style.opacity = d.locked ? String(pr(t, 5.6 + li * 0.28, 0.25)) : '0';
+          });
+        },
+      );
+
+      // ============ SCENE 7 — outro (48–56)
+      scene(
+        48,
+        56,
+        (r) => {
+          const rings = [0, 1, 2].map((i) =>
+            mk(
+              r,
+              '',
+              '',
+              'left:960px;top:420px;width:620px;height:620px;margin:-310px 0 0 -310px;border-radius:50%;border:2px solid rgba(45,212,191,.5)',
+            ),
+          );
+          const logo = mk(
+            r,
+            '',
+            `<div style="display:flex;align-items:center;gap:36px">${LOGO(190)}<div class="wm" style="font-size:150px">GED <span>By DZ</span></div></div>`,
+            'left:0;top:310px;width:1920px;height:220px;display:flex;align-items:center;justify-content:center',
+          );
+          const row = mk(
+            r,
+            '',
+            '',
+            'left:0;top:610px;width:1920px;height:110px;display:flex;justify-content:center;gap:64px',
+          );
+          const words = [
+            L('Créez.', 'Create.'),
+            L('Réutilisez.', 'Reuse.'),
+            L('Simplifiez.', 'Simplify.'),
+          ].map((wd, i) => {
+            const e = document.createElement('div');
+            e.textContent = wd;
+            e.style.cssText = `font-size:84px;font-weight:800;letter-spacing:-2px;color:${i === 2 ? '#2dd4bf' : '#fff'}`;
+            row.appendChild(e);
+            return e;
+          });
+          const sub = mk(
+            r,
+            'sub',
+            L(
+              'Du PDF au formulaire, du formulaire au document.',
+              'From PDF to form, from form to document.',
+            ),
+            'left:0;top:790px;width:1920px;text-align:center;font-size:36px',
+          );
+          cue('boom', 0.15, 1);
+          cue('riser', -0.8, 0.7);
+          [3.1, 3.9, 4.7].forEach((x) => {
+            cue('pop', x, 0.9);
+            cue('shimmer', x + 0.02, 0.35, (x - 3.9) / 3);
+          });
+          cue('chime', 5.5, 0.8);
+          return { rings, logo, words, sub };
+        },
+        (t, c) => {
+          const k = pr(t, 0.15, 1.0, ease.back);
+          put(c.logo, { s: lerp(0.6, 1, k), o: pr(t, 0.15, 0.5), b: (1 - pr(t, 0.15, 0.7)) * 14 });
+          c.rings.forEach((rg, i) => {
+            const p = ((((t - 0.2 - i * 0.7) % 2.1) + 2.1) % 2.1) / 2.1;
+            put(rg, { s: 0.6 + p * 1.8, o: t > 0.2 ? (1 - p) * 0.55 : 0 });
+          });
+          const centers = [490, 890, 1380];
+          c.words.forEach((w, i) => {
+            const kk = pr(t, 3.1 + i * 0.8, 0.55, ease.back);
+            put(w, {
+              y: (1 - kk) * 40,
+              s: lerp(0.8, 1, kk),
+              o: pr(t, 3.1 + i * 0.8, 0.3),
+              b: (1 - kk) * 10,
+            });
+          });
+          put(c.sub, { o: pr(t, 5.5, 0.7), y: (1 - pr(t, 5.5, 0.7)) * 20 });
+        },
+      );
+
+      // ============ global render
+      window.CUES = CUES;
+      window.renderAt = (T) => {
+        const sh = Math.sin(T * 0.18);
+        put(blobs[0], { x: -400 + sh * 260, y: -700 + Math.cos(T * 0.15) * 160, o: 1 });
+        put(blobs[1], { x: 900 - sh * 200, y: -150 + Math.sin(T * 0.12) * 200, o: 1 });
+        put(blobs[2], { x: 300 + Math.cos(T * 0.1) * 300, y: 450, o: 1 });
+        const hv = pr(T, 2.6, 0.5, ease.lin) * (1 - pr(T, 47.6, 0.4, ease.lin));
+        put(header, { o: hv, y: (1 - hv) * -16 });
+        progress.style.opacity = String(
+          pr(T, 2.6, 0.5, ease.lin) * (1 - pr(T, 47.6, 0.4, ease.lin)),
+        );
+        segs.forEach((sg, i) => {
+          sg.style.width = cl((T - i * 8) / 8) * 100 + '%';
+        });
+        scenes.forEach((s) => {
+          const aIn = s.start === 0 ? pr(T, 0, 0.3, ease.lin) : pr(T, s.start - 0.3, 0.5, ease.lin);
+          const aOut =
+            s.end >= 56 ? 1 - pr(T, 55.2, 0.8, ease.lin) : 1 - pr(T, s.end - 0.3, 0.5, ease.lin);
+          const a = aIn * aOut;
+          if (a <= 0.002) {
+            s.root.style.display = 'none';
+            return;
+          }
+          s.root.style.display = 'block';
+          s.root.style.opacity = a;
+          s.root.style.transform = `scale(${1 + (1 - aIn) * 0.03 - (1 - aOut) * 0.025})`;
+          s.update(T - s.start, s.ctx);
+        });
+      };
+      window.renderAt(0);
+    </script>
+  </body>
+</html>
