@@ -1475,11 +1475,11 @@
           );
           cue('boom', 0.15, 1);
           cue('riser', -0.8, 0.7);
-          [3.1, 3.9, 4.7].forEach((x) => {
+          [5.25, 5.85, 6.85].forEach((x, n) => {
             cue('pop', x, 0.9);
-            cue('shimmer', x + 0.02, 0.35, (x - 3.9) / 3);
+            cue('shimmer', x + 0.02, 0.35, (n - 1) / 3);
           });
-          cue('chime', 5.5, 0.8);
+          cue('chime', 7.0, 0.6);
           return { rings, logo, words, sub };
         },
         (t, c) => {
@@ -1491,15 +1491,15 @@
           });
           const centers = [490, 890, 1380];
           c.words.forEach((w, i) => {
-            const kk = pr(t, 3.1 + i * 0.8, 0.55, ease.back);
+            const kk = pr(t, [5.25, 5.85, 6.85][i], 0.55, ease.back);
             put(w, {
               y: (1 - kk) * 40,
               s: lerp(0.8, 1, kk),
-              o: pr(t, 3.1 + i * 0.8, 0.3),
+              o: pr(t, [5.25, 5.85, 6.85][i], 0.3),
               b: (1 - kk) * 10,
             });
           });
-          put(c.sub, { o: pr(t, 5.5, 0.7), y: (1 - pr(t, 5.5, 0.7)) * 20 });
+          put(c.sub, { o: pr(t, 2.0, 0.7), y: (1 - pr(t, 2.0, 0.7)) * 20 });
         },
       );
 
@@ -1521,7 +1521,7 @@
         scenes.forEach((s) => {
           const aIn = s.start === 0 ? pr(T, 0, 0.3, ease.lin) : pr(T, s.start - 0.3, 0.5, ease.lin);
           const aOut =
-            s.end >= 56 ? 1 - pr(T, 55.2, 0.8, ease.lin) : 1 - pr(T, s.end - 0.3, 0.5, ease.lin);
+            s.end >= 56 ? 1 - pr(T, 55.6, 0.4, ease.lin) : 1 - pr(T, s.end - 0.3, 0.5, ease.lin);
           const a = aIn * aOut;
           if (a <= 0.002) {
             s.root.style.display = 'none';

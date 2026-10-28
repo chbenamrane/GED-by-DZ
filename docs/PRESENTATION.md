@@ -83,3 +83,7 @@ ffmpeg -i storage/presentation/ged-by-dz-fr.mp4 -i storage/presentation/voice-fr
 ```
 
 Remplacer `fr` par `en` pour la version anglaise. L'image n'est pas ré-encodée. L'envoi par e-mail présenté nécessite une configuration SMTP dans l'application.
+
+## Mixage automatique d'un enregistrement continu
+
+Pour une voix enregistrée en une seule piste (une pause entre les phrases), `node scripts/video/mix-voice.mjs fr <fichier>` (ou `en`) la découpe en sept segments, les place sur leurs séquences, normalise la voix et écrit `ged-by-dz-<langue>-final.mp4`. Les instants de début de parole de chaque segment sont dans le script ; à ajuster pour un autre enregistrement.
