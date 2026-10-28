@@ -1,0 +1,294 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #06131c;
+        color: #fff;
+        font-family: 'Segoe UI Variable Display', 'Segoe UI', Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .a {
+        position: absolute;
+      }
+      #bg {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #06131c 0%, #0a2230 55%, #08262b 100%);
+      }
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+      }
+      .dots {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1.5px, transparent 1.6px);
+        background-size: 48px 48px;
+      }
+      .wm {
+        font-weight: 800;
+        letter-spacing: -1px;
+        line-height: 1;
+        white-space: nowrap;
+      }
+      .wm span {
+        font-weight: 300;
+        color: #7fe0d0;
+      }
+      .eyebrow {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 4px;
+        color: #2dd4bf;
+      }
+      h1 {
+        font-size: 104px;
+        line-height: 1.03;
+        font-weight: 800;
+        letter-spacing: -3.5px;
+      }
+      h1 em {
+        font-style: normal;
+        color: #2dd4bf;
+      }
+      .sub {
+        font-size: 33px;
+        line-height: 1.4;
+        color: #b4cad6;
+      }
+      .feat {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 30px;
+        font-weight: 600;
+      }
+      .feat i {
+        width: 52px;
+        height: 52px;
+        border-radius: 15px;
+        background: rgba(45, 212, 191, 0.14);
+        border: 1px solid rgba(45, 212, 191, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+      }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        background: #2dd4bf;
+        color: #06131c;
+        font-size: 34px;
+        font-weight: 800;
+        padding: 24px 46px;
+        border-radius: 99px;
+        box-shadow: 0 20px 50px rgba(45, 212, 191, 0.35);
+      }
+      .paper {
+        position: absolute;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow:
+          0 30px 70px rgba(0, 0, 0, 0.45),
+          0 3px 8px rgba(0, 0, 0, 0.15);
+      }
+      .fld {
+        position: absolute;
+        border: 2.5px solid #14b8a0;
+        background: rgba(20, 184, 160, 0.14);
+        border-radius: 7px;
+        color: #0d3b3a;
+        font-size: 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        white-space: nowrap;
+      }
+      .fld .tag {
+        position: absolute;
+        left: -2px;
+        top: -26px;
+        background: #087e70;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 6px 6px 6px 0;
+        letter-spacing: 0.4px;
+      }
+      .glass {
+        position: absolute;
+        background: rgba(10, 34, 48, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 22px;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        border-radius: 99px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bg"></div>
+    <div
+      class="blob"
+      style="
+        left: 760px;
+        top: -420px;
+        width: 1500px;
+        height: 1500px;
+        background: radial-gradient(circle, rgba(20, 184, 160, 0.34), transparent 62%);
+      "
+    ></div>
+    <div
+      class="blob"
+      style="
+        left: -500px;
+        top: 380px;
+        width: 1300px;
+        height: 1300px;
+        background: radial-gradient(circle, rgba(56, 120, 220, 0.22), transparent 62%);
+      "
+    ></div>
+    <div class="dots"></div>
+    <div id="root"></div>
+    <script>
+      const LANG = new URLSearchParams(location.search).get('lang') || 'fr';
+      const L = (fr, en) => (LANG === 'fr' ? fr : en);
+      const root = document.getElementById('root');
+      const ic = (d, s = 28, sw = 2.2) =>
+        `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="#2dd4bf" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+      const ICONS = {
+        editor:
+          '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v16M12 9h5M12 13h5"/>',
+        batch: '<path d="M7 4h9l3 3v11H7z"/><path d="M4 8v13h12"/>',
+        format: '<path d="M4 6h10v14H4zM16 10h5v10h-5z"/>',
+        share: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+      };
+      const logo = `<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#087e70"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#g)"/><path d="M20 12h17l10 10v28a3 3 0 0 1-3 3H20a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3z" fill="#fff"/><path d="M37 12v10h10z" fill="#b6ece3"/><rect x="23" y="29" width="18" height="4.5" rx="2.2" fill="#087e70"/><rect x="23" y="38" width="12" height="4.5" rx="2.2" fill="#7fd9cc"/></svg>`;
+      function el(cls, html, css) {
+        const d = document.createElement('div');
+        d.className = 'a ' + cls;
+        d.innerHTML = html || '';
+        d.style.cssText = css || '';
+        root.appendChild(d);
+        return d;
+      }
+      function lines(parent, w, h, seed) {
+        const pad = w * 0.09;
+        let s = `<div style="position:absolute;left:${pad}px;top:${pad}px;width:${w * 0.42}px;height:${w * 0.035}px;border-radius:99px;background:#9fb3c2"></div>`;
+        const lh = w * 0.022,
+          gap = lh * 2.2;
+        let y = pad * 2 + w * 0.07,
+          i = 0;
+        while (y < h - pad - lh) {
+          const wd = [0.82, 0.72, 0.9, 0.55, 0.78, 0.66, 0.85][(i + seed) % 7];
+          s += `<div style="position:absolute;left:${pad}px;top:${y}px;width:${(w - pad * 2) * wd}px;height:${lh}px;border-radius:99px;background:#e3e9ef"></div>`;
+          y += gap;
+          i++;
+        }
+        parent.insertAdjacentHTML('afterbegin', s);
+      }
+
+      // header
+      el(
+        '',
+        `<div style="display:flex;align-items:center;gap:18px">${logo}<div class="wm" style="font-size:44px">GED <span>By DZ</span></div></div>`,
+        'left:100px;top:70px',
+      );
+
+      // copy
+      el(
+        'eyebrow',
+        L('GESTION ÉLECTRONIQUE DE DOCUMENTS', 'DOCUMENT MANAGEMENT'),
+        'left:104px;top:215px',
+      );
+      el(
+        '',
+        `<h1>${L('Vos PDF deviennent<br><em>des formulaires.</em>', 'Turn your PDFs<br>into <em>reusable forms.</em>')}</h1>`,
+        'left:100px;top:262px;white-space:nowrap',
+      );
+      el(
+        'sub',
+        L(
+          'Importez, placez vos champs, remplissez<br>et générez vos documents en quelques clics.',
+          'Import, place your fields, fill in<br>and generate your documents in a few clicks.',
+        ),
+        'left:104px;top:508px',
+      );
+      const feats = [
+        ['editor', L('Éditeur visuel multipage', 'Multi-page visual editor')],
+        ['batch', L('Génération en lot, en une fois', 'Batch generation in one go')],
+        ['format', L("Formats d'origine préservés", 'Original formats preserved')],
+        ['share', L('PDF, ZIP ou e-mail en un clic', 'PDF, ZIP or email in one click')],
+      ];
+      feats.forEach(([k, t], i) =>
+        el('feat', `<i>${ic(ICONS[k])}</i><span>${t}</span>`, `left:104px;top:${648 + i * 70}px`),
+      );
+      el(
+        '',
+        `<div class="cta">${L('Créez. Réutilisez. Simplifiez.', 'Create. Reuse. Simplify.')}</div>`,
+        'left:104px;top:926px',
+      );
+
+      // visual: stack of generated documents + main form
+      const stack = el('', '', 'left:1010px;top:150px;width:800px;height:800px');
+      [3, 2, 1].forEach((n) => {
+        const p = document.createElement('div');
+        p.className = 'paper';
+        p.style.cssText = `left:${200 + n * 62}px;top:${130 - n * 8}px;width:400px;height:560px;transform:rotate(${n * 4.5}deg);opacity:${1 - n * 0.12}`;
+        lines(p, 400, 560, n + 2);
+        stack.appendChild(p);
+      });
+      const main = document.createElement('div');
+      main.className = 'paper';
+      main.style.cssText = 'left:120px;top:140px;width:420px;height:590px;transform:rotate(-3deg)';
+      lines(main, 420, 590, 0);
+      [
+        [34, 150, 290, 46, L('Nom', 'Name'), 'Amine Benali'],
+        [34, 238, 290, 46, L('Société', 'Company'), 'Atlas Conseil'],
+        [34, 326, 200, 46, 'Date', '28/10/2026'],
+      ].forEach(([x, y, w, h, tag, v]) => {
+        main.insertAdjacentHTML(
+          'beforeend',
+          `<div class="fld" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"><span class="tag">${tag}</span>${v}</div>`,
+        );
+      });
+      main.insertAdjacentHTML(
+        'beforeend',
+        `<div class="fld" style="left:34px;top:414px;width:46px;height:46px;justify-content:center;padding:0"><span class="tag">${L('Case', 'Box')}</span>✓</div><div style="position:absolute;left:96px;top:424px;font-size:20px;font-weight:600;color:#162c3f">${L('Accord signé', 'Signed agreement')}</div>`,
+      );
+      stack.appendChild(main);
+      stack.insertAdjacentHTML(
+        'beforeend',
+        `<div class="pill" style="position:absolute;left:660px;top:70px;width:104px;height:104px;border-radius:50%;background:#2dd4bf;color:#06131c;font-size:46px;justify-content:center;box-shadow:0 14px 40px rgba(45,212,191,.55)">×5</div>`,
+      );
+      stack.insertAdjacentHTML(
+        'beforeend',
+        `<div class="glass" style="left:30px;top:20px;padding:20px 28px;display:flex;align-items:center;gap:16px;font-size:24px;font-weight:700"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#2dd4bf" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-7"/></svg>${L('5 documents générés', '5 documents generated')}</div>`,
+      );
+      stack.insertAdjacentHTML(
+        'beforeend',
+        `<div class="glass" style="left:380px;top:735px;padding:18px 26px;display:flex;align-items:center;gap:14px;font-size:22px;font-weight:700;border-radius:99px">${ic(ICONS.share, 28)}${L('Envoyé par e-mail', 'Sent by email')}</div>`,
+      );
+    </script>
+  </body>
+</html>
