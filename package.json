@@ -16,7 +16,6 @@
     "test": "tsx --test tests/*.test.ts",
     "db:generate": "prisma generate",
     "db:deploy": "prisma migrate deploy",
-    "db:import": "tsx scripts/import-legacy.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "postinstall": "node scripts/setup-worker.mjs",
     "test:e2e": "tsx scripts/verify-e2e.ts",

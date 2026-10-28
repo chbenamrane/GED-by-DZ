@@ -83,8 +83,3 @@ model Setting {
   id String @id @default("smtp")
   value Json
 }
-model ImportRun {
-  id String @id
-  completedAt DateTime @default(now())
-  summary Json
-}

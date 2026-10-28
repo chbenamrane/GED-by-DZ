@@ -95,15 +95,6 @@ CREATE TABLE "Setting" (
     CONSTRAINT "Setting_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "ImportRun" (
-    "id" TEXT NOT NULL,
-    "completedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "summary" JSONB NOT NULL,
-
-    CONSTRAINT "ImportRun_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
