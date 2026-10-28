@@ -7,23 +7,25 @@ Application de transformation des documents PDF en formulaires réutilisables. S
 Prérequis : Node.js 22.12+ et PostgreSQL 17 installé dans `C:\Program Files\PostgreSQL\17`.
 
 ```powershell
-cd C:\xampp\htdocs\GED-by-DZ
+git clone https://github.com/chbenamrane/GED-by-DZ.git
+cd GED-by-DZ
 npm ci
 npm run db:local
 npm run db:generate
 npm run db:deploy
-npm run db:import
-npm run db:import -- --apply
+npm run admin:create -- mon_admin
 npm run dev
 ```
 
-Ouvrir **http://localhost:3000**. L’import conserve les identifiants, les rôles et les mots de passe bcrypt des comptes existants. Aucun mot de passe n’est stocké dans ce dépôt.
+Ouvrir **http://localhost:3000** (et non `127.0.0.1` : l’origine doit correspondre exactement à `APP_URL`). Aucun mot de passe n’est stocké dans ce dépôt.
+
+Reprise facultative d’une ancienne version PHP : voir [docs/MIGRATION.md](docs/MIGRATION.md). L’import conserve les identifiants, les rôles et les mots de passe bcrypt des comptes existants.
 
 `db:local` crée une instance PostgreSQL indépendante dans `storage/postgres`, sur `127.0.0.1:55432`, sans modifier le service existant. Les identifiants aléatoires et la clé de chiffrement SMTP restent uniquement dans `.env`, exclu de Git. Relancer cette commande après un redémarrage du poste pour remettre cette instance en route.
 
 Pour utiliser votre propre PostgreSQL : copier `.env.example` vers `.env`, renseigner une base dédiée dans `DATABASE_URL` et une clé de 32 octets hexadécimaux dans `SETTINGS_ENCRYPTION_KEY`, puis lancer `db:generate` et `db:deploy`. Ne pas utiliser `db:local` dans ce cas. La base et le rôle doivent déjà exister.
 
-Pour une installation vierge sans import : `npm run admin:create -- mon_admin`. Le mot de passe est demandé à l’invite.
+`npm run admin:create -- mon_admin` demande le mot de passe à l’invite (8 caractères minimum, avec une lettre et un chiffre).
 
 ## Fonctions
 
@@ -84,3 +86,11 @@ Configurer `.env`, PostgreSQL et un stockage persistant accessible au processus 
 Sauvegarder PostgreSQL avec `pg_dump`, `storage/templates` et la clé de chiffrement séparément. Données réelles, `.env`, modèles PDF, `node_modules` et builds ne sont jamais versionnés.
 
 Voir [docs/MIGRATION.md](docs/MIGRATION.md) pour la correspondance des données et le suivi.
+
+## Sécurité
+
+Voir [SECURITY.md](SECURITY.md) : modèle de sécurité, liste de contrôle avant mise en production, limites connues et signalement privé des vulnérabilités. Ne publiez jamais votre fichier `.env`, vos modèles PDF ni vos données réelles.
+
+## Licence
+
+[MIT](LICENSE).

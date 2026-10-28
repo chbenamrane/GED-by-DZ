@@ -2,9 +2,8 @@
 
 ## Dépôts
 
-- Source PHP : `C:\xampp\htdocs\ged`, commit de sauvegarde `fd009f1`.
-- Nouvelle version : `C:\xampp\htdocs\GED-by-DZ`, dépôt indépendant.
-- GitHub privé : https://github.com/chbenamrane/GED-by-DZ.
+- Source PHP : l'ancienne version de l'application, dans un dépôt séparé (dossier voisin, par exemple `../ged`).
+- Nouvelle version : ce dépôt, indépendant.
 - Stack retenue : Next.js, Node.js, PostgreSQL, Tailwind CSS, Prisma.
 
 ## Correspondance
@@ -24,8 +23,8 @@ Les fichiers SMTP externes et variables d’environnement PHP ne sont pas import
 ## Import
 
 ```powershell
-npm run db:import -- --source=C:\xampp\htdocs\ged
-npm run db:import -- --source=C:\xampp\htdocs\ged --apply
+npm run db:import -- --source=../ged
+npm run db:import -- --source=../ged --apply
 ```
 
 Par défaut, le script contrôle JSON, relations, PDF et coordonnées sans écrire. `--apply` copie les PDF puis importe dans une transaction PostgreSQL. En cas d’échec, les nouvelles copies sont retirées. Le contenu des JSON et PDF détermine l’empreinte : un instantané déjà importé est ignoré. Les comptes existants de même identifiant de connexion sont conservés et ne sont pas écrasés.
