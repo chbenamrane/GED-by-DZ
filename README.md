@@ -46,7 +46,6 @@
 - User accounts with administrator and user roles, recovery e-mail addresses.
 - SMTP settings (the password is encrypted) and a test e-mail.
 - Password recovery by e-mail with a single-use temporary link; sessions with idle and absolute timeouts.
-- Optional transactional import of an older PHP version (see [docs/MIGRATION.md](docs/MIGRATION.md)).
 
 ## Tech stack
 
@@ -124,7 +123,6 @@ Keep `SETTINGS_ENCRYPTION_KEY` safe and back it up separately from the database:
 | `npm run db:deploy`    | Apply database migrations.                                                |
 | `npm run db:local`     | Create or start the isolated local PostgreSQL (Windows).                  |
 | `npm run admin:create` | Create an administrator account.                                          |
-| `npm run db:import`    | Import data from an older PHP version (dry run, add `-- --apply`).        |
 | `npm run format`       | Format the code with Prettier.                                            |
 | `npm run video`        | Render the presentation videos (needs Microsoft Edge and FFmpeg).         |
 
@@ -135,9 +133,9 @@ src/app/            Pages (App Router) and the API in src/app/api/[...path]/rout
 src/components/     Workspace screens, PDF editor, PDF preview, modal, login forms
 src/lib/            Security, PDF engine, field validation, mail, storage, client helpers
 prisma/             Schema and SQL migrations
-scripts/            Admin, local database, legacy import, end-to-end tests, presentation tools
+scripts/            Admin, local database, end-to-end tests, presentation tools
 tests/              Domain tests
-docs/               Migration guide and presentation scripts
+docs/               Presentation scripts
 storage/            Template PDFs and local data (not versioned)
 ```
 
@@ -183,8 +181,6 @@ npm start
 ```
 
 Use a dedicated PostgreSQL, a persistent storage directory writable by the Node.js process, an HTTPS reverse proxy and a process supervisor. Set `APP_URL` to the public HTTPS origin: session cookies then get the `Secure` flag and HSTS is sent. Back up PostgreSQL with `pg_dump`, `storage/templates` and the encryption key separately.
-
-If you serve the project through Apache/XAMPP, the provided `.htaccess` blocks direct access to the code and `storage`; the app itself is served by Node.js.
 
 ## Security
 

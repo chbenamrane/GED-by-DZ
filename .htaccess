@@ -1,3 +1,0 @@
-# Le code et le stockage sont servis exclusivement par Next.js (port 3000).
-# Interdire leur exposition directe par Apache/XAMPP.
-Require all denied
