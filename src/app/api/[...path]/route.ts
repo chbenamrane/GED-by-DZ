@@ -342,6 +342,8 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
       const b = z
         .object({ ids: z.array(z.string()).min(1).max(100), email: z.email().optional() })
         .parse(await body(request));
+      // Any signed-in user can mail through the shared SMTP account: cap it to limit abuse.
+      if (b.email) await rateLimit(`mail:${user.id}`, 20, 3600);
       const unique = [...new Set(b.ids)];
       const docs = await db.document.findMany({
         where: { id: { in: unique }, ...owner },
