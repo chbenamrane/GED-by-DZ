@@ -1,79 +1,180 @@
 # GED By DZ
 
-Application de transformation des documents PDF en formulaires réutilisables. Stack : **Next.js App Router, Node.js, PostgreSQL, Tailwind CSS et Prisma**, avec TypeScript. Le dépôt PHP historique reste séparé dans `../ged`. Cette application utilise son propre serveur Node.js.
+[![CI](https://github.com/chbenamrane/GED-by-DZ/actions/workflows/ci.yml/badge.svg)](https://github.com/chbenamrane/GED-by-DZ/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## Démarrage Windows
+**Turn PDF documents into reusable forms.** Import a PDF once, place fields on any page with a visual editor, then fill in the form as many times as you need and get a finished PDF with the original pages, sizes and orientations untouched.
 
-Prérequis : Node.js 22.12+ et PostgreSQL 17 installé dans `C:\Program Files\PostgreSQL\17`.
+> Français : [README.fr.md](README.fr.md)
 
-```powershell
+## Table of contents
+
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [Scripts](#scripts)
+- [Project structure](#project-structure)
+- [PDF fidelity](#pdf-fidelity)
+- [E-mail](#e-mail)
+- [Roles and permissions](#roles-and-permissions)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+**Templates (administrators)**
+
+- Import a PDF (10 MB max), then activate, deactivate, rename, recolor or delete it.
+- Templates are shown as compact tiles grouped by folder. Drag a tile onto a folder to move it.
+- Multi-page visual editor: place and move fields and checkboxes, zoom, native coordinates in millimetres, duplicate fields, test PDF. A new field is ready to rename as soon as you add it.
+- Field types: text, long text, number, date, rating (1–5), list and checkboxes, with default values, limits, required flag, bold text and background clearing.
+
+**Documents (everyone)**
+
+- "New document" opens a modal listing the active templates by collapsible folder.
+- The form shows a **live PDF preview** that updates while you type.
+- Generate several documents in one go. "Generate" saves them, "Generate and download" saves and downloads, then you land back on the document list.
+- Document list: view, share by e-mail, download, duplicate and delete, plus search, filter by template and statuses.
+- Bulk actions: ZIP download and e-mail with PDF attachments.
+
+**Administration**
+
+- User accounts with administrator and user roles, recovery e-mail addresses.
+- SMTP settings (the password is encrypted) and a test e-mail.
+- Password recovery by e-mail with a single-use temporary link; sessions with idle and absolute timeouts.
+- Optional transactional import of an older PHP version (see [docs/MIGRATION.md](docs/MIGRATION.md)).
+
+## Tech stack
+
+Next.js (App Router) · Node.js · PostgreSQL · Prisma · Tailwind CSS · TypeScript · pdf-lib (generation) · PDF.js (rendering) · Nodemailer · SweetAlert2 · Zod.
+
+The app runs its own Node.js server and API. There is no external service to configure besides PostgreSQL and, optionally, an SMTP server.
+
+## Quick start
+
+Requirements: **Node.js 22.12+** and **PostgreSQL 17**.
+
+```bash
 git clone https://github.com/chbenamrane/GED-by-DZ.git
 cd GED-by-DZ
 npm ci
-npm run db:local
+```
+
+Then choose one of the two database setups.
+
+**A. Use your own PostgreSQL** (any OS)
+
+1. Create an empty database and a dedicated role.
+2. Copy `.env.example` to `.env` and fill in `DATABASE_URL` and `SETTINGS_ENCRYPTION_KEY` (see [Configuration](#configuration)).
+3. Apply the schema:
+
+```bash
 npm run db:generate
 npm run db:deploy
-npm run admin:create -- mon_admin
+```
+
+**B. Let the project create a local PostgreSQL** (Windows, PostgreSQL 17 installed in `C:\Program Files\PostgreSQL\17`)
+
+```powershell
+npm run db:local      # creates storage/postgres on 127.0.0.1:55432 and writes .env with random secrets
+npm run db:generate
+npm run db:deploy
+```
+
+Run `npm run db:local` again after every reboot to start that database. It is meant for local development only.
+
+Create the first administrator (the password is asked at the prompt: 8+ characters with a letter and a digit), then start the app:
+
+```bash
+npm run admin:create -- my_admin
 npm run dev
 ```
 
-Ouvrir **http://localhost:3000** (et non `127.0.0.1` : l’origine doit correspondre exactement à `APP_URL`). Aucun mot de passe n’est stocké dans ce dépôt.
+Open **http://localhost:3000**. Use `localhost`, not `127.0.0.1`: the browser origin must match `APP_URL` exactly, otherwise write requests are refused with "Origine de la requête refusée".
 
-Reprise facultative d’une ancienne version PHP : voir [docs/MIGRATION.md](docs/MIGRATION.md). L’import conserve les identifiants, les rôles et les mots de passe bcrypt des comptes existants.
+## Configuration
 
-`db:local` crée une instance PostgreSQL indépendante dans `storage/postgres`, sur `127.0.0.1:55432`, sans modifier le service existant. Les identifiants aléatoires et la clé de chiffrement SMTP restent uniquement dans `.env`, exclu de Git. Relancer cette commande après un redémarrage du poste pour remettre cette instance en route.
+Everything is configured through environment variables in `.env` (never committed).
 
-Pour utiliser votre propre PostgreSQL : copier `.env.example` vers `.env`, renseigner une base dédiée dans `DATABASE_URL` et une clé de 32 octets hexadécimaux dans `SETTINGS_ENCRYPTION_KEY`, puis lancer `db:generate` et `db:deploy`. Ne pas utiliser `db:local` dans ce cas. La base et le rôle doivent déjà exister.
+| Variable                  | Required | Description                                                                                                                                     |
+| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`            | yes      | PostgreSQL connection string, for example `postgresql://ged:change-me@localhost:5432/ged_by_dz?schema=public`.                                  |
+| `APP_URL`                 | yes      | Exact origin used in the browser, for example `http://localhost:3000`. Used for recovery links and CSRF protection.                             |
+| `SETTINGS_ENCRYPTION_KEY` | yes      | 32 bytes as 64 hex characters, encrypts the SMTP password. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `STORAGE_DIR`             | no       | Where template PDFs are stored. Default `./storage`.                                                                                            |
+| `PDF_FONT_PATH`           | no       | A Unicode font for generated PDFs. Defaults to Arial on Windows, DejaVu Sans on Linux, then Helvetica.                                          |
 
-`npm run admin:create -- mon_admin` demande le mot de passe à l’invite (8 caractères minimum, avec une lettre et un chiffre).
+Keep `SETTINGS_ENCRYPTION_KEY` safe and back it up separately from the database: without it the stored SMTP password cannot be decrypted.
 
-## Fonctions
+## Scripts
 
-- Connexion, déconnexion, sessions avec limites d’inactivité et de durée ; rôles administrateur et utilisateur.
-- Récupération par e-mail avec lien temporaire à usage unique ; changement de mot de passe et révocation des sessions.
-- Import PDF validé, activation/désactivation, renommage, couleur et classement par dossier.
-- Éditeur visuel multipage : placement et déplacement des champs et des cases, zoom, coordonnées natives en millimètres, duplication et PDF test.
-- Texte, texte long, nombre, date, note 1–5, liste et cases à cocher ; valeurs par défaut, limites, caractère obligatoire, gras et effacement du fond.
-- Formulaires, duplication d’un document existant, génération multiple, enregistrement seul ou téléchargement.
-- Historique, recherche, filtre par modèle, statuts, suppression, PDF individuel, ZIP et e-mail avec pièces jointes.
-- Gestion des comptes et des adresses de récupération ; paramètres SMTP et e-mail de test.
-- Import transactionnel des JSON PHP et copie des modèles PDF, avec validation préalable et garde contre les doubles imports.
+| Command                | What it does                                                              |
+| ---------------------- | ------------------------------------------------------------------------- |
+| `npm run dev`          | Development server on `127.0.0.1:3000`.                                   |
+| `npm run build`        | Production build.                                                         |
+| `npm start`            | Production server on `127.0.0.1:3000`.                                    |
+| `npm run typecheck`    | TypeScript check.                                                         |
+| `npm test`             | Domain tests (fields, PDF geometry, bcrypt compatibility, encryption).    |
+| `npm run test:e2e`     | Browser and API end-to-end scenario (needs the app and database running). |
+| `npm run db:generate`  | Generate the Prisma client.                                               |
+| `npm run db:deploy`    | Apply database migrations.                                                |
+| `npm run db:local`     | Create or start the isolated local PostgreSQL (Windows).                  |
+| `npm run admin:create` | Create an administrator account.                                          |
+| `npm run db:import`    | Import data from an older PHP version (dry run, add `-- --apply`).        |
+| `npm run format`       | Format the code with Prettier.                                            |
+| `npm run video`        | Render the presentation videos (needs Microsoft Edge and FFmpeg).         |
 
-Les documents sont accessibles uniquement à leur propriétaire et aux administrateurs. Les contrôles sont exécutés dans les API. Un modèle supprimé disparaît de la création de documents mais reste disponible pour les documents historiques.
+## Project structure
 
-## Fidélité PDF
+```text
+src/app/            Pages (App Router) and the API in src/app/api/[...path]/route.ts
+src/components/     Workspace screens, PDF editor, PDF preview, modal, login forms
+src/lib/            Security, PDF engine, field validation, mail, storage, client helpers
+prisma/             Schema and SQL migrations
+scripts/            Admin, local database, legacy import, end-to-end tests, presentation tools
+tests/              Domain tests
+docs/               Migration guide and presentation scripts
+storage/            Template PDFs and local data (not versioned)
+```
 
-Le moteur modifie le PDF source avec `pdf-lib` : toutes les pages, leurs dimensions, leurs boîtes de recadrage et leurs rotations sont conservées, sans conversion implicite en A4. L’aperçu PDF.js partage les mêmes coordonnées visibles. Les PDF chiffrés doivent être exportés sans protection avant import. Taille maximale : 10 Mo ; génération/export groupés : 100 documents par requête.
+## PDF fidelity
 
-Les anciens modèles calibrés sur A4 passent en coordonnées natives à l’import, sans changer le fichier source. Les placements historiques restent sur la première page ; de nouveaux champs peuvent être placés sur toutes les pages.
+The engine edits the source PDF with `pdf-lib`: every page, its size, crop boxes and rotation are kept, with no implicit conversion to A4. The browser preview (PDF.js) shares the same visible coordinates. Encrypted PDFs must be exported without protection before import. Limits: 10 MB per template, 100 documents per bulk request.
 
-Configurer `PDF_FONT_PATH` pour une police Unicode spécifique. Sous Windows, Arial est détectée ; sous Linux, DejaVu Sans est essayée. Le secours Helvetica reste limité à son jeu de caractères. Un PDF rempli est une version modifiée : les signatures numériques préexistantes ne peuvent pas rester valides après modification. L’enregistrement n’est pas une copie binaire de l’original.
+A filled PDF is a modified version: existing digital signatures cannot stay valid. Saving a document does not keep a binary copy of the original.
 
-## E-mail et environnement
+## E-mail
 
-Renseigner le SMTP depuis Paramètres. Son mot de passe est chiffré en AES-256-GCM dans PostgreSQL ; la clé reste dans l’environnement. Aucun mot de passe SMTP n’est renvoyé au navigateur. Sans SMTP configuré, l’envoi réel et la récupération par e-mail ne sont pas disponibles. Les tests utilisent un serveur fictif local et n’envoient aucun message externe.
+Configure SMTP from the **Settings** page. Without it, e-mail delivery and password recovery are unavailable. The SMTP password is encrypted with AES-256-GCM, never sent back to the browser, and e-mail sending is rate limited per user. End-to-end tests use a local fake SMTP server and send nothing outside.
 
-`APP_URL` doit correspondre exactement à l’origine utilisée dans le navigateur, par exemple `http://localhost:3000`. Elle sert aux liens de récupération et au contrôle des requêtes d’écriture. En HTTPS, les cookies de session sont marqués `Secure`.
+## Roles and permissions
 
-## Vérifications
+- **Administrator:** templates, folders, users and settings, and access to every document.
+- **User:** creates and manages their own documents only.
 
-```powershell
+Permissions are enforced on the server in the API, not only in the interface.
+
+## Testing
+
+```bash
 npm run db:generate
 npm run typecheck
 npm test
 npm run build
 npm start
-# Dans un autre terminal, application et base démarrées :
+# in another terminal, with the app and database running:
 npm run test:e2e
 ```
 
-Tests de domaine : formats mixtes, rotations, recadrages, champs, bcrypt PHP et chiffrement SMTP. Tests de bout en bout : accès, PDF, ZIP, dossiers, SMTP local, rendu et déplacement des champs dans le navigateur, formulaires, mobile, connexion et récupération. Les comptes et PDF synthétiques sont supprimés après le scénario. Celui-ci utilise Microsoft Edge sur Windows ; ses captures et son rapport restent dans `storage/qa`, ignoré par Git. Utiliser une base de développement sans utilisateurs concurrents : les réglages SMTP sont temporairement remplacés puis restaurés.
+The end-to-end scenario creates synthetic accounts and PDFs and removes them afterwards. It uses Microsoft Edge on Windows, writes screenshots and a report to `storage/qa` (ignored by Git), and temporarily replaces the SMTP settings before restoring them, so run it on a development database. GitHub Actions runs install, Prisma generation, type check, tests, build and a dependency audit on every push and pull request, with no secrets.
 
-GitHub Actions exécute installation, génération Prisma, vérification TypeScript, tests de domaine et build, sans secrets de production.
+## Deployment
 
-## Livraison
-
-```powershell
+```bash
 npm ci
 npm run db:generate
 npm run db:deploy
@@ -81,16 +182,23 @@ npm run build
 npm start
 ```
 
-Configurer `.env`, PostgreSQL et un stockage persistant accessible au processus Node.js. En production, utiliser un reverse proxy HTTPS et un superviseur de processus. `.htaccess` bloque l’exposition directe du code et de `storage` par Apache/XAMPP ; l’application est servie par Node.js.
+Use a dedicated PostgreSQL, a persistent storage directory writable by the Node.js process, an HTTPS reverse proxy and a process supervisor. Set `APP_URL` to the public HTTPS origin: session cookies then get the `Secure` flag and HSTS is sent. Back up PostgreSQL with `pg_dump`, `storage/templates` and the encryption key separately.
 
-Sauvegarder PostgreSQL avec `pg_dump`, `storage/templates` et la clé de chiffrement séparément. Données réelles, `.env`, modèles PDF, `node_modules` et builds ne sont jamais versionnés.
+If you serve the project through Apache/XAMPP, the provided `.htaccess` blocks direct access to the code and `storage`; the app itself is served by Node.js.
 
-Voir [docs/MIGRATION.md](docs/MIGRATION.md) pour la correspondance des données et le suivi.
+## Security
 
-## Sécurité
+See [SECURITY.md](SECURITY.md) for the security model, the production checklist, known limitations and how to report a vulnerability privately. Never publish your `.env`, template PDFs or real data.
 
-Voir [SECURITY.md](SECURITY.md) : modèle de sécurité, liste de contrôle avant mise en production, limites connues et signalement privé des vulnérabilités. Ne publiez jamais votre fichier `.env`, vos modèles PDF ni vos données réelles.
+## Contributing
 
-## Licence
+Issues and pull requests are welcome. Before opening a pull request:
 
-[MIT](LICENSE).
+1. Run `npm run typecheck`, `npm test` and `npm run build`.
+2. Format your changes with `npm run format`.
+3. Keep commits small, one logical step each, with a short imperative subject line.
+4. Do not commit `.env`, passwords, real data, PDF templates or generated files.
+
+## License
+
+[MIT](LICENSE) © Chams eddine BENAMRANE
