@@ -2,6 +2,11 @@
   "name": "ged-by-dz",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chbenamrane/GED-by-DZ.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "node scripts/setup-worker.mjs && prisma generate && next dev --hostname 127.0.0.1",
