@@ -1,10 +1,10 @@
 # GED By DZ — vidéos de présentation
 
-Deux versions de **56 secondes**, en français et en anglais. Format 16:9, 1920 × 1080, 30 images/seconde, MP4 H.264 avec audio AAC. Motion graphics aux couleurs du projet (écrans illustrés avec des données fictives), sept séquences de 8 secondes : import, éditeur, génération, historique, formats et droits, signature. Bande son : effets sonores synthétisés (clics, frappes, transitions, cloche de validation) et fond musical discret. La voix off est à ajouter.
+Deux versions de **56 secondes**, en français et en anglais. Format 16:9, 1920 × 1080, 30 images/seconde, MP4 H.264 avec audio AAC. Motion graphics aux couleurs du projet (écrans illustrés avec des données fictives), sept séquences de 8 secondes : import, éditeur, génération, historique, formats et droits, signature. Bande son : effets sonores synthétisés (clics, frappes, transitions, cloche de validation). Pas de musique de fond. La voix off est à ajouter.
 
 ## Fichiers et reproduction
 
-- `storage/presentation/ged-by-dz-fr.mp4` et `ged-by-dz-en.mp4` : vidéos avec effets et fond musical, sans voix.
+- `storage/presentation/ged-by-dz-fr.mp4` et `ged-by-dz-en.mp4` : vidéos avec effets sonores, sans voix.
 - `storage/presentation/sfx-fr.wav` et `sfx-en.wav` : la bande son seule, pour un montage externe.
 - Rendu : `npm run video` (ou `node scripts/video/render.mjs fr` / `en`). Nécessite Microsoft Edge et FFmpeg ; environ une minute par langue.
 - Sources : `scripts/video/scene.html` (animation, textes, repères sonores), `scripts/video/audio.mjs` (synthèse sonore), `scripts/video/render.mjs` (capture et encodage).
@@ -76,7 +76,7 @@ GED By DZ. From PDF to form, from form to document. Create, reuse, simplify.
 
 ## Intégration de la voix off
 
-Avec `voice-fr.wav` calée sur 56 secondes dans `storage/presentation/`, depuis la racine du dépôt. La musique et les effets baissent automatiquement sous la voix :
+Avec `voice-fr.wav` calée sur 56 secondes dans `storage/presentation/`, depuis la racine du dépôt. Les effets baissent automatiquement sous la voix :
 
 ```powershell
 ffmpeg -i storage/presentation/ged-by-dz-fr.mp4 -i storage/presentation/voice-fr.wav -filter_complex "[1:a]asplit[v][sc];[0:a][sc]sidechaincompress=threshold=0.02:ratio=6:attack=20:release=400[duck];[duck][v]amix=inputs=2:duration=first:normalize=0[a]" -map 0:v:0 -map "[a]" -c:v copy -c:a aac -b:a 256k -t 56 -movflags +faststart storage/presentation/ged-by-dz-fr-final.mp4

@@ -1,4 +1,4 @@
-// Offline sound design: sound effects from cue list + a soft musical bed, stereo 48 kHz.
+// Offline sound design: sound effects from the cue list, stereo 48 kHz.
 const SR = 48000;
 let seed = 20261028;
 const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296) * 2 - 1;
@@ -172,64 +172,10 @@ function reverb(inp, mixAmt) {
   return out;
 }
 
-// musical bed: slow pad + soft plucks over C – Am – F – G
-const hz = (m) => 440 * 2 ** ((m - 69) / 12);
-function bed(L, R, dur) {
-  const chords = [
-    [48, 55, 59, 64],
-    [45, 52, 57, 60],
-    [41, 48, 57, 60],
-    [43, 50, 59, 62],
-  ]; // CΔ7, Am7, FΔ7, G6
-  const seg = 4;
-  for (let c = 0; c * seg < dur; c++) {
-    const ch = chords[c % 4],
-      t0 = c * seg;
-    // pad
-    for (const m of ch) {
-      const b = tone(seg + 1.6, hz(m), 0, (p) => Math.sin(p) * 0.6 + Math.sin(p * 2.003) * 0.15);
-      for (let i = 0; i < b.length; i++) {
-        const t = i / SR,
-          env = Math.min(1, t / 1.2) * (t > seg ? Math.max(0, 1 - (t - seg) / 1.6) : 1);
-        const k = Math.floor(t0 * SR) + i;
-        if (k >= L.length) break;
-        const v = b[i] * env * 0.055;
-        L[k] += v;
-        R[k] += v;
-      }
-    }
-    // bass
-    const bs = tone(seg, hz(ch[0] - 12), 0.4);
-    for (let i = 0; i < bs.length; i++) {
-      const k = Math.floor(t0 * SR) + i;
-      if (k < L.length) {
-        L[k] += bs[i] * 0.1;
-        R[k] += bs[i] * 0.1;
-      }
-    }
-    // plucks (eighth notes at 120 bpm)
-    const pat = [0, 1, 2, 3, 2, 1, 2, 3, 0, 1, 2, 3, 2, 1, 3, 2];
-    pat.forEach((n, j) => {
-      const t = t0 + j * 0.25;
-      if (t < 2 || t > dur - 1.2) return;
-      const f = hz(ch[n] + 12),
-        b = tone(0.7, f, 7.5, (p) => Math.sin(p) + 0.25 * Math.sin(2 * p));
-      const gain = 0.05 * Math.min(1, (t - 2) / 4) * (t > 47.5 ? 1.6 : 1);
-      const pan = j % 2 ? 0.7 : 0.3;
-      const k0 = Math.floor(t * SR);
-      for (let i = 0; i < b.length && k0 + i < L.length; i++) {
-        L[k0 + i] += b[i] * gain * (1 - pan);
-        R[k0 + i] += b[i] * gain * pan;
-      }
-    });
-  }
-}
-
 export function synth(cues, dur) {
   const N = Math.floor(dur * SR);
   const L = new Float32Array(N),
     R = new Float32Array(N);
-  bed(L, R, dur);
   const sendL = new Float32Array(N),
     sendR = new Float32Array(N);
   const cache = {};
