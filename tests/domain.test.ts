@@ -78,7 +78,7 @@ test('Formulaires : champs requis, choix autorisés et cases dédupliquées', ()
   };
   assert.deepEqual(validateValues([check], { check: [0, 0, 15, -1, '0'] }), { check: [0] });
 });
-test('Sécurité : compatibilité bcrypt PHP et chiffrement SMTP authentifié', async () => {
+test('Sécurité : hachages bcrypt $2y$ et chiffrement SMTP authentifié', async () => {
   const hash = (await bcrypt.hash('Password123!', 4)).replace('$2b$', '$2y$');
   assert.equal(await checkPassword('Password123!', hash), true);
   assert.equal(await checkPassword('wrong', hash), false);
