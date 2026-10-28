@@ -19,7 +19,11 @@ await mkdir(out, { recursive: true });
 
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 try {
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  // Layout is authored at 1920x1080; the 4/3 scale factor captures it at 2560x1440 (1440p).
+  const page = await browser.newPage({
+    viewport: { width: 1920, height: 1080 },
+    deviceScaleFactor: 4 / 3,
+  });
   page.on('pageerror', (e) => console.error('page error:', e.message));
   page.on('console', (m) => m.type() === 'error' && console.error('console:', m.text()));
   await page.goto(
@@ -61,8 +65,12 @@ try {
         'libx264',
         '-preset',
         'medium',
-        '-crf',
-        '16',
+        '-b:v',
+        '20M',
+        '-maxrate',
+        '28M',
+        '-bufsize',
+        '40M',
         '-pix_fmt',
         'yuv420p',
         '-c:a',
@@ -80,7 +88,7 @@ try {
     const total = FPS * DURATION;
     for (let i = 0; i < total; i++) {
       await page.evaluate((t) => window.renderAt(t), i / FPS);
-      const buf = await page.screenshot({ type: 'jpeg', quality: 93 });
+      const buf = await page.screenshot({ type: 'jpeg', quality: 95 });
       if (!ff.stdin.write(buf)) await once(ff.stdin, 'drain');
       if (i % 150 === 0) console.log(lang, `${i}/${total}`);
     }

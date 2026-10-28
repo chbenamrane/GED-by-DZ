@@ -1,6 +1,6 @@
 # GED By DZ — vidéos de présentation
 
-Deux versions de **56 secondes**, en français et en anglais. Format 16:9, 1920 × 1080, 30 images/seconde, MP4 H.264 avec audio AAC. Motion graphics aux couleurs du projet (écrans illustrés avec des données fictives), sept séquences de 8 secondes : import, éditeur, génération, historique, formats et droits, signature. Bande son : effets sonores synthétisés (clics, frappes, transitions, cloche de validation). Pas de musique de fond. La voix off est à ajouter.
+Deux versions de **56 secondes**, en français et en anglais. Format 16:9, 2560 × 1440 (1440p), 30 images/seconde, MP4 H.264 à 20 Mbit/s (minimum 10 Mbit/s), audio AAC. Motion graphics aux couleurs du projet (écrans illustrés avec des données fictives), sept séquences de 8 secondes : import, éditeur, génération, historique, formats et droits, signature. Bande son : effets sonores synthétisés (clics, frappes, transitions, cloche de validation). Pas de musique de fond. La voix off est à ajouter.
 
 ## Fichiers et reproduction
 
