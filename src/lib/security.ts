@@ -26,6 +26,11 @@ export function checkOrigin(request: Request) {
 export async function rateLimit(id: string, max: number, seconds: number) {
   const key = hashToken(id);
   const now = new Date();
+  // Unauthenticated callers can create one row per attempted username: purge old ones now and then.
+  if (Math.random() < 0.02)
+    await db.rateLimit.deleteMany({
+      where: { expiresAt: { lt: new Date(now.getTime() - 86_400_000) } },
+    });
   await db.rateLimit.upsert({
     where: { id: key },
     create: { id: key, count: 0, expiresAt: new Date(Date.now() + seconds * 1000) },
