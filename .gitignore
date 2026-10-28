@@ -10,3 +10,13 @@ public/pdf.worker.min.mjs
 *.log
 test-results/
 playwright-report/
+next-env.d.ts
+.claude/
+.DS_Store
+Thumbs.db
+*.pem
+*.key
+*.p12
+*.pfx
+*.dump
+*.sql.gz
